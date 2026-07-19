@@ -1,5 +1,12 @@
-{
-  "oracle": "https://github.com/orangestudio623-max/Oracle-.git",
-  "mysite": "https://yourusername.github.io/mysite/",
-  "coolstuff": "https://otheruser.github.io/coolstuff/"
-}
+[
+  {
+    "name": "Example Site",
+    "url": "https://example.com",
+    "desc": "An example website for testing."
+  },
+  {
+    "name": "My GitHub",
+    "url": "https://github.com/orangestudio623-max",
+    "desc": "Your GitHub profile."
+  }
+]
