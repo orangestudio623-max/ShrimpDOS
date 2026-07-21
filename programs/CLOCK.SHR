@@ -1,0 +1,22 @@
+{
+  "name":"Digital Clock",
+  "version":"1.0",
+  "icon":"🕒",
+  "type":"app"
+}
+===
+let html = `
+  <div style="display:flex; align-items:center; justify-content:center; height:100%; background:#1e1e2e;">
+    <div id="clock-display" style="font-size:36px; color:#0f0; font-family:monospace;"></div>
+  </div>`;
+
+let win = shrimp.createWindow("Clock", html, {width:220, height:120});
+let body = win.querySelector('.win-body');
+let display = body.querySelector('#clock-display');
+
+function update() {
+  let now = new Date();
+  display.textContent = now.toLocaleTimeString();
+}
+update();
+setInterval(update, 1000);
