@@ -1,9 +1,42 @@
 [
   {
-    "name": "Example App",
-    "file": "example.shr",
-    "desc": "A sample application",
-    "icon": "🛠️",
-    "url": "https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/programs/example.shr"
+    "name": "Library",
+    "file": "LIBRARY.SHR",
+    "desc": "Browse and launch installed apps and games.",
+    "icon": "🎮",
+    "type": "app",
+    "url": "https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/programs/LIBRARY.SHR"
+  },
+  {
+    "name": "Calculator",
+    "file": "CALCULATOR.SHR",
+    "desc": "A simple GUI calculator.",
+    "icon": "🔢",
+    "type": "app",
+    "url": "https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/programs/CALCULATOR.SHR"
+  },
+  {
+    "name": "Notepad",
+    "file": "NOTEPAD.SHR",
+    "desc": "A standalone text editor.",
+    "icon": "📝",
+    "type": "app",
+    "url": "https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/programs/NOTEPAD.SHR"
+  },
+  {
+    "name": "Digital Clock",
+    "file": "CLOCK.SHR",
+    "desc": "A simple digital clock.",
+    "icon": "🕒",
+    "type": "app",
+    "url": "https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/programs/CLOCK.SHR"
+  },
+  {
+    "name": "Snake",
+    "file": "SNAKE.SHR",
+    "desc": "Classic snake game with touch controls.",
+    "icon": "🐍",
+    "type": "game",
+    "url": "https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/games/SNAKE.SHR"
   }
 ]
