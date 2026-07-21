@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Shrimp DOS – Manual Pin & File Names</title>
+    <style>
+        :root {
+            --text: #00cc00; --text-dim: #009900; --bg-term: #0d0d0d; --cursor-color: #00cc00;
+            --gui-bg: #111; --gui-panel: #1a1a1a; --gui-btn: #2a2a2a; --gui-text: #ccc; --gui-highlight: #00cc00;
+        }
+        .theme-amber { --text: #cc8800; --text-dim: #996600; --cursor-color: #cc8800; --gui-highlight: #cc8800; }
+        .theme-white  { --text: #ccc; --text-dim: #999; --cursor-color: #ccc; --gui-highlight: #ccc; }
+        .theme-shrimp { --text: #cc6666; --text-dim: #994d4d; --cursor-color: #cc6666; --gui-highlight: #cc6666; }
+
+        * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+        html,body { height:100%; width:100%; background:#000; font-family:'Courier New',monospace; display:flex; justify-content:center; align-items:center; touch-action:manipulation; }
+        #container {
+            width:100%; max-width:500px; height:100%; max-height:900px;
+            display:flex; flex-direction:column; background:#050505; border:3px solid #333; border-radius:12px;
+            overflow:hidden; position:relative;
+        }
+        #title-bar {
+            background:#0e0e0e; padding:8px 14px; display:flex; align-items:center; justify-content:space-between;
+            border-bottom:2px solid #2a2a2a; z-index:5; flex-shrink:0;
+        }
+        #title-text { font-size:13px; font-weight:bold; color:#aaa; display:flex; align-items:center; gap:6px; }
+        .shrimp-icon { font-size:18px; animation:bounce 1.5s infinite; }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-4px)} 50%{transform:translateY(0)} 70%{transform:translateY(-2px)} }
+        #theme-btns { display:flex; gap:6px; }
+        .theme-btn { width:20px; height:20px; border-radius:50%; border:2px solid #444; cursor:pointer; background:#1a1a1a; }
+        .theme-btn.active { border-color:#fff; }
+        .green { background:#00cc00; } .amber { background:#cc8800; } .white { background:#ccc; } .shrimp { background:#cc6666; }
+
+        #output-area {
+            flex:1; overflow-y:auto; padding:10px 12px 4px;
+            background:var(--bg-term); color:var(--text);
+            font-size:14px; line-height:1.5; white-space:pre-wrap; word-break:break-all;
+            text-shadow:none; -webkit-overflow-scrolling:touch;
+        }
+        .output-line { color:var(--text-dim); } .output-error { color:#cc4444; } .output-highlight { font-weight:bold; }
+
+        #input-line {
+            display:flex; align-items:center; padding:6px 12px; background:var(--bg-term);
+            border-top:2px solid #2a2a2a; z-index:2; flex-shrink:0;
+        }
+        .prompt-text { color:var(--text); font-weight:bold; margin-right:6px; white-space:nowrap; font-size:14px; }
+        #terminal-input {
+            flex:1; background:transparent; border:none; outline:none; color:var(--text);
+            font-family:inherit; font-size:14px; caret-color:var(--cursor-color);
+            -webkit-user-select:text; user-select:text;
+        }
+        #terminal-input::selection { background:var(--text); color:var(--bg-term); }
+
+        /* Desktop */
+        #desktop-root {
+            display:none; flex:1; position:relative; overflow:hidden; background:#1e1e2e;
+        }
+        #desktop-area {
+            position:absolute; top:0; left:0; right:0; bottom:40px; overflow:hidden;
+        }
+        .desktop-shortcut {
+            position:absolute; width:70px; text-align:center; cursor:pointer; padding:5px; border-radius:8px;
+            color:#ccc; font-size:11px; transition:background 0.2s;
+        }
+        .desktop-shortcut:hover { background:rgba(255,255,255,0.1); }
+        .shortcut-icon { font-size:32px; display:block; margin-bottom:4px; }
+        .shortcut-label { word-wrap:break-word; }
+
+        /* Right-click context menu */
+        .context-menu {
+            position:absolute; background:#2a2a3e; border:1px solid #555; border-radius:6px;
+            z-index:300; display:none; flex-direction:column; width:120px; padding:4px 0;
+        }
+        .context-menu-item {
+            padding:6px 12px; color:#ccc; cursor:pointer; font-size:12px;
+        }
+        .context-menu-item:hover { background:#3a3a5e; }
+
+        /* Taskbar */
+        #taskbar {
+            position:absolute; bottom:0; left:0; right:0; height:40px; background:#2a2a3e; display:flex;
+            align-items:center; padding:0 5px; gap:5px; z-index:10;
+        }
+        #start-btn {
+            background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; padding:5px 10px;
+        }
+        #start-menu {
+            position:absolute; bottom:40px; left:5px; background:#2a2a3e; border:1px solid #555;
+            border-radius:8px; display:none; flex-direction:column; width:180px; z-index:15;
+        }
+        .start-menu-item {
+            padding:8px 12px; color:#ccc; cursor:pointer; display:flex; align-items:center; gap:8px;
+        }
+        .start-menu-item:hover { background:#3a3a5e; }
+        #clock {
+            margin-left:auto; color:#ccc; font-size:13px; padding:0 10px;
+        }
+        #taskbar-windows { display:flex; gap:4px; flex:1; overflow-x:auto; }
+        .taskbar-btn {
+            padding:2px 8px; background:#444; border:none; color:#ccc; cursor:pointer; border-radius:4px;
+            white-space:nowrap;
+        }
+        .taskbar-btn.active { background:#555; }
+
+        /* Windows */
+        .shrimp-window {
+            position:absolute; background:var(--gui-panel); border:2px solid #555; border-radius:8px;
+            min-width:200px; min-height:100px; display:flex; flex-direction:column;
+            box-shadow:0 0 10px rgba(0,0,0,0.5); z-index:30;
+        }
+        .shrimp-window .window-titlebar {
+            display:flex; align-items:center; justify-content:space-between;
+            background:#2a2a2a; padding:4px 8px; border-radius:6px 6px 0 0; cursor:move;
+            touch-action: none;
+        }
+        .shrimp-window .window-title { color:var(--gui-text); font-size:13px; }
+        .shrimp-window .window-controls { display:flex; gap:5px; }
+        .shrimp-window .win-btn {
+            width:24px; height:24px; border-radius:50%; border:none; cursor:pointer;
+            background:#555; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px;
+            transition: background 0.1s;
+        }
+        .shrimp-window .win-btn:hover { background:#777; }
+        .shrimp-window .win-btn.close { background:#cc4444; }
+        .shrimp-window .win-btn.close:hover { background:#ee5555; }
+        .shrimp-window .win-body { flex:1; overflow:auto; padding:8px; color:var(--gui-text); }
+
+        .resize-handle {
+            position:absolute; bottom:0; right:0; width:16px; height:16px;
+            background: linear-gradient(135deg, transparent 50%, #888 50%);
+            cursor: nwse-resize; border-radius:0 0 6px 0; touch-action: none;
+        }
+
+        .dialog-overlay {
+            position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:200;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .dialog-box {
+            background:#2a2a3e; border:2px solid #666; border-radius:12px; padding:20px;
+            color:#ccc; min-width:250px; text-align:center; z-index:201;
+        }
+        .dialog-title { font-size:16px; margin-bottom:10px; }
+        .dialog-message { margin-bottom:15px; }
+        .dialog-input { width:100%; padding:5px; background:#111; border:1px solid #555; color:#ccc; margin-bottom:10px; }
+        .dialog-buttons { display:flex; gap:10px; justify-content:center; }
+        .dialog-btn { background:#444; border:none; color:#ccc; padding:5px 15px; border-radius:5px; cursor:pointer; }
+        .dialog-btn.primary { background:#00cc00; color:#000; }
+
+        .toast {
+            position:absolute; top:10px; left:50%; transform:translateX(-50%); background:#333; color:#fff;
+            padding:8px 16px; border-radius:8px; z-index:210; font-size:13px; transition:opacity 0.3s;
+        }
+        .toast.info { background:#2a2a4e; }
+        .toast.error { background:#a33; }
+        .toast.success { background:#2a4e2a; }
+
+        .browser-tabs { display:flex; background:#1a1a1a; border-bottom:1px solid #444; overflow-x:auto; padding:2px 4px; gap:2px; }
+        .browser-tab { padding:4px 10px; background:#333; color:#ccc; border-radius:6px 6px 0 0; cursor:pointer; white-space:nowrap; font-size:12px; display:flex; align-items:center; gap:5px; }
+        .browser-tab.active { background:#555; color:#fff; }
+        .browser-tab .close-tab { margin-left:4px; cursor:pointer; font-weight:bold; color:#f88; font-size:14px; }
+        .browser-tab .close-tab:hover { color:#f44; }
+
+        /* File manager items */
+        .fm-item {
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            padding:4px; border-radius:6px; cursor:pointer; text-align:center; transition:background 0.1s;
+            width:70px; height:70px;
+        }
+        .fm-item:hover { background:#333; }
+        .fm-item-icon { font-size:24px; }
+        .fm-item-name {
+            font-size:9px; line-height:1.2; word-break:break-all; max-width:100%;
+            overflow-wrap: break-word; hyphens: auto; text-align:center;
+        }
+
+        #file-import { display:none; }
+
+        @media (max-width:380px) {
+            #output-area, #terminal-input, .prompt-text { font-size:12px; }
+            #title-text { font-size:11px; } .theme-btn { width:16px; height:16px; }
+            .desktop-shortcut { width:60px; }
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <div id="title-bar">
+        <span id="title-text"><span class="shrimp-icon">🦐</span> SHRIMP DOS v3.2</span>
+        <div id="theme-btns">
+            <button class="theme-btn green active" data-theme="green"></button>
+            <button class="theme-btn amber" data-theme="amber"></button>
+            <button class="theme-btn white" data-theme="white"></button>
+            <button class="theme-btn shrimp" data-theme="shrimp"></button>
+        </div>
+    </div>
+
+    <div id="output-area"></div>
+    <div id="input-line">
+        <span class="prompt-text" id="prompt-display">C:\&gt;</span>
+        <input type="text" id="terminal-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+
+    <div id="desktop-root">
+        <div id="desktop-area"></div>
+        <div id="context-menu" class="context-menu">
+            <div class="context-menu-item" data-action="unpin">📍 Unpin</div>
+        </div>
+        <div id="taskbar">
+            <button id="start-btn">🦐</button>
+            <div id="taskbar-windows"></div>
+            <span id="clock">12:00</span>
+        </div>
+        <div id="start-menu">
+            <div class="start-menu-item" data-action="filemgr">📁 Files</div>
+            <div class="start-menu-item" data-action="browser">🌐 Browser</div>
+            <div class="start-menu-item" data-action="console">🖥️ Console</div>
+            <div class="start-menu-item" data-action="pkgmgr">📦 Packages</div>
+            <div class="start-menu-item" data-action="exit">↩️ Exit to Terminal</div>
+        </div>
+    </div>
+
+    <input type="file" id="file-import" style="display:none">
+</div>
+
+<script>
+(function() {
+    // ==================== FILE SYSTEM ====================
+    const STORAGE_KEY = 'shrimp-dos-v32';
+    const VERSION_KEY = 'shrimp-dos-ver-v32';
+    const FS_VERSION = 3;
+
+    function defaultFS() {
+        return {
+            'C:': { type:'dir', children:{
+                'SYSTEM': { type:'dir', children:{
+                    'GUI': { type:'dir', children:{
+                        'DESKTOP.SHGUI': { type:'file', content:
+                            '{\n  "name":"Shrimp Desktop",\n  "version":"2.0",\n  "icon":"🖥️",\n  "type":"app"\n}\n===\n' +
+                            'shrimp.createDesktop();\n' +
+                            'shrimp.createShortcut("Files", "📁", "FILE_MANAGER");\n' +
+                            'shrimp.createShortcut("Web", "🌐", "BROWSER");\n' +
+                            'shrimp.createShortcut("Console", "🖥️", "CONSOLE");\n' +
+                            'shrimp.createShortcut("Term", "💻", "TERMINAL");\n' +
+                            'shrimp.createShortcut("Packages", "📦", "PKG_MANAGER");\n' +
+                            'let programs = shrimp.scanPrograms();\n' +
+                            'for (let p of programs) {\n' +
+                            '  shrimp.createShortcut(p.name, p.icon, p.path);\n' +
+                            '}\n'
+                        },
+                        'FILE_MANAGER.SHGUI': { type:'file', content:
+                            '{\n  "name":"File Manager",\n  "version":"1.0",\n  "icon":"📁"\n}\n===\nshrimp.launchFileManager();\n'
+                        }
+                    }},
+                    'BROWSER.SHR': { type:'file', content:
+                        '{\n  "name":"Shrimp Browser",\n  "version":"3.0",\n  "icon":"🌐"\n}\n===\nshrimp.launchBrowser();\n'
+                    },
+                    'PKG_MANAGER.SHR': { type:'file', content:
+                        '{\n  "name":"Package Manager",\n  "version":"1.0",\n  "icon":"📦"\n}\n===\n' +
+                        'shrimp.launchPkgManager();\n'
+                    }
+                }},
+                'PROGRAMS': { type:'dir', children:{
+                    'HelloWorld.shr': { type:'file', content:
+                        '{\n  "name":"Hello World",\n  "version":"1.0",\n  "icon":"🔥"\n}\n===\nshrimp.println("Hello from a Shrimp program!");\nshrimp.echo("You can create your own apps and place them in C:\\PROGRAMS.");\n'
+                    }
+                }},
+                'README.TXT': { type:'file', content:'Welcome to Shrimp DOS v3.2!\r\nManual pinning & compact file names.' }
+            }}
+        };
+    }
+
+    if (localStorage.getItem(VERSION_KEY) !== String(FS_VERSION)) {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.setItem(VERSION_KEY, String(FS_VERSION));
+    }
+    let fsRoot = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultFS();
+    function saveFS() { localStorage.setItem(STORAGE_KEY, JSON.stringify(fsRoot)); }
+    let cwd = ['C:'];
+    function getDir() { let n=fsRoot; for(const p of cwd) { if(n[p]?.type==='dir') n=n[p].children; else return null; } return n; }
+    function pathStr() { return cwd.length===1?'C:\\':'C:\\'+cwd.slice(1).join('\\'); }
+    function findInDir(name) { const d=getDir(); if(!d) return null; const u=name.toUpperCase(); for(const [k,v] of Object.entries(d)) if(k.toUpperCase()===u) return {name:k,...v}; return null; }
+
+    function resolvePath(input) {
+        input = input.trim();
+        if (input.startsWith('C:\\') || input.startsWith('C:/')) {
+            const parts = input.substring(2).split(/[\\/]+/).filter(Boolean);
+            let current = fsRoot['C:'];
+            for (let i = 0; i < parts.length - 1; i++) {
+                if (!current.children || !current.children[parts[i]] || current.children[parts[i]].type !== 'dir') return null;
+                current = current.children[parts[i]];
+            }
+            const name = parts[parts.length - 1];
+            if (current.children && current.children[name]) return { name, ...current.children[name] };
+            return null;
+        } else {
+            const parts = input.split(/[\\/]+/).filter(Boolean);
+            let current = getDir();
+            for (let i = 0; i < parts.length - 1; i++) {
+                if (!current || !current[parts[i]] || current[parts[i]].type !== 'dir') return null;
+                current = current[parts[i]].children;
+            }
+            const name = parts[parts.length - 1];
+            if (current && current[name]) return { name, ...current[name] };
+            return null;
+        }
+    }
+
+    // ==================== SOUND SYSTEM ====================
+    let audioCtx = null;
+    function getAudioCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+    function playTone(freq, duration, type = 'square', volume = 0.08) {
+        try { const ctx = getAudioCtx(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = type; osc.frequency.value = freq; gain.gain.value = volume; osc.connect(gain); gain.connect(ctx.destination); osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration); osc.stop(ctx.currentTime + duration + 0.05); } catch(e) {}
+    }
+    function playSound(name) {
+        switch(name) {
+            case 'startup': playTone(523,0.15); setTimeout(()=>playTone(659,0.15),150); setTimeout(()=>playTone(784,0.2),300); break;
+            case 'open': playTone(800,0.06,'sine',0.06); break;
+            case 'close': playTone(400,0.08,'sine',0.05); break;
+            case 'error': playTone(200,0.2,'sawtooth',0.1); break;
+            case 'click': playTone(1000,0.03,'sine',0.04); break;
+            case 'notification': playTone(880,0.1); setTimeout(()=>playTone(1100,0.1),100); break;
+        }
+    }
+
+    // ==================== TERMINAL STATE ====================
+    let displayLines = [], animQueue = [], animTimer = null, animSpeed = 30, animEnabled = true;
+    let history = [], histIdx = -1, theme = 'green';
+    let editMode = false, editFile = '', editLines = [];
+    let globalVars = {};
+    let desktopActive = false;
+    let shortcuts = [];
+    let lastBrowseResults = [];
+    let siteRegistryCache = null;
+    let windowsCount = 0;
+    let consoleLines = [];
+
+    const outputArea = document.getElementById('output-area');
+    const inputField = document.getElementById('terminal-input');
+    const promptDisplay = document.getElementById('prompt-display');
+    const inputLine = document.getElementById('input-line');
+    const desktopRoot = document.getElementById('desktop-root');
+    const desktopArea = document.getElementById('desktop-area');
+    const contextMenu = document.getElementById('context-menu');
+    const taskbar = document.getElementById('taskbar');
+    const startBtn = document.getElementById('start-btn');
+    const startMenu = document.getElementById('start-menu');
+    const clockEl = document.getElementById('clock');
+    const taskbarWindows = document.getElementById('taskbar-windows');
+    const themeBtns = document.querySelectorAll('.theme-btn');
+    const container = document.getElementById('container');
+    const fileImport = document.getElementById('file-import');
+
+    // ==================== CONTEXT MENU ====================
+    let contextTarget = null;
+    contextMenu.addEventListener('click', (e) => {
+        const action = e.target.dataset.action;
+        if (action === 'unpin' && contextTarget) {
+            const shortcut = shortcuts.find(s => s.el === contextTarget);
+            if (shortcut) {
+                removeShortcut(shortcut.name);
+                showToast(`Unpinned ${shortcut.name}`, 'info');
+            }
+        }
+        contextMenu.style.display = 'none';
+        contextTarget = null;
+    });
+    document.addEventListener('click', () => {
+        contextMenu.style.display = 'none';
+        contextTarget = null;
+    });
+
+    // ==================== LINE ANIMATION ====================
+    function stopAnimation() { if (animTimer) { clearTimeout(animTimer); animTimer = null; } }
+    function processNextLine() { if (animQueue.length === 0) { animTimer = null; return; } const line = animQueue.shift(); displayLines.push(line); renderDisplay(); if (animQueue.length > 0) animTimer = setTimeout(processNextLine, animSpeed); }
+    function queueLine(text, type = 'normal') { if (!animEnabled) { displayLines.push({text, type}); renderDisplay(); return; } animQueue.push({text, type}); if (!animTimer) animTimer = setTimeout(processNextLine, animSpeed); }
+    function flushAll() { stopAnimation(); while(animQueue.length) displayLines.push(animQueue.shift()); renderDisplay(); }
+    function out(text, type = 'normal') { if (desktopActive && type !== 'command') consoleLines.push({text, type}); if (type === 'command') { displayLines.push({text, type}); renderDisplay(); return; } text.split('\n').forEach(l => queueLine(l, type)); }
+    function clearOut() { stopAnimation(); displayLines = []; animQueue = []; renderDisplay(); }
+    function renderDisplay() { let html = ''; for (const line of displayLines) { let cls = 'output-line'; if (line.type === 'error') cls = 'output-error'; else if (line.type === 'highlight') cls = 'output-highlight'; html += `<span class="${cls}">${esc(line.text)}</span>\n`; } outputArea.innerHTML = html; outputArea.scrollTop = outputArea.scrollHeight; }
+    function updatePrompt() { promptDisplay.textContent = editMode ? `(edit) ${editFile}>` : pathStr() + '>'; }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // ==================== DESKTOP GRAPHICAL APIs ====================
+    function showToast(message, type = 'info') { if (!desktopActive) return; const toast = document.createElement('div'); toast.className = 'toast ' + type; toast.textContent = message; desktopArea.appendChild(toast); setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500); }
+    function showDialog(title, message, options = {}) {
+        return new Promise((resolve) => {
+            if (!desktopActive) { if (options.type === 'confirm') resolve(confirm(message)); else if (options.type === 'prompt') resolve(prompt(message, options.default || '')); else { alert(message); resolve(); } return; }
+            const overlay = document.createElement('div'); overlay.className = 'dialog-overlay';
+            let dialogHTML = `<div class="dialog-box"><div class="dialog-title">${title}</div><div class="dialog-message">${message}</div>`;
+            if (options.type === 'prompt') { dialogHTML += `<input class="dialog-input" id="dialog-input" value="${esc(options.default || '')}">`; }
+            dialogHTML += `<div class="dialog-buttons">`;
+            if (options.type === 'confirm') { dialogHTML += `<button class="dialog-btn" id="dialog-no">No</button><button class="dialog-btn primary" id="dialog-yes">Yes</button>`; }
+            else if (options.type === 'prompt') { dialogHTML += `<button class="dialog-btn" id="dialog-cancel">Cancel</button><button class="dialog-btn primary" id="dialog-ok">OK</button>`; }
+            else { dialogHTML += `<button class="dialog-btn primary" id="dialog-ok">OK</button>`; }
+            dialogHTML += `</div></div>`; overlay.innerHTML = dialogHTML; desktopArea.appendChild(overlay);
+            const cleanup = () => overlay.remove();
+            if (options.type === 'confirm') { overlay.querySelector('#dialog-yes').onclick = () => { cleanup(); resolve(true); }; overlay.querySelector('#dialog-no').onclick = () => { cleanup(); resolve(false); }; }
+            else if (options.type === 'prompt') { const input = overlay.querySelector('#dialog-input'); overlay.querySelector('#dialog-ok').onclick = () => { cleanup(); resolve(input.value); }; overlay.querySelector('#dialog-cancel').onclick = () => { cleanup(); resolve(null); }; input.focus(); }
+            else { overlay.querySelector('#dialog-ok').onclick = () => { cleanup(); resolve(); }; }
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) { cleanup(); resolve(options.type === 'confirm' ? false : null); } });
+        });
+    }
+
+    function openConsoleWindow() {
+        if (!desktopActive) return;
+        const html = `<div id="console-output" style="background:#0a0a0a; color:#0f0; font-family:monospace; font-size:12px; padding:8px; height:100%; overflow-y:auto; white-space:pre-wrap;">${consoleLines.map(l => { let color = '#0f0'; if (l.type === 'error') color = '#f44'; else if (l.type === 'highlight') color = '#ff0'; return `<span style="color:${color}">${esc(l.text)}</span>`; }).join('\n')}</div>`;
+        const win = createWindowInDesktop('System Console', html, { width: 380, height: 300 });
+        if (win) { const refreshConsole = () => { const outEl = win.querySelector('#console-output'); if (outEl) { outEl.innerHTML = consoleLines.map(l => { let color = '#0f0'; if (l.type === 'error') color = '#f44'; else if (l.type === 'highlight') color = '#ff0'; return `<span style="color:${color}">${esc(l.text)}</span>`; }).join('\n'); outEl.scrollTop = outEl.scrollHeight; } }; const interval = setInterval(refreshConsole, 500); win.querySelector('.close').addEventListener('click', ()=>{ clearInterval(interval); win.remove(); }); }
+    }
+
+    // ==================== DESKTOP ====================
+    function createDesktop() {
+        if (desktopActive) return;
+        desktopActive = true; consoleLines = [];
+        outputArea.style.display = 'none'; inputLine.style.display = 'none'; desktopRoot.style.display = 'flex';
+        clockEl.textContent = new Date().toLocaleTimeString();
+        setInterval(() => { clockEl.textContent = new Date().toLocaleTimeString(); }, 1000);
+        startBtn.onclick = () => { startMenu.style.display = startMenu.style.display==='block'?'none':'block'; };
+        document.addEventListener('click', (e) => { if(!startBtn.contains(e.target)&&!startMenu.contains(e.target)) startMenu.style.display='none'; });
+        startMenu.querySelectorAll('.start-menu-item').forEach(item => {
+            item.onclick = () => {
+                const action = item.dataset.action;
+                if (action === 'filemgr') handleCommand('RUN C:\\SYSTEM\\GUI\\FILE_MANAGER.SHGUI');
+                else if (action === 'browser') handleCommand('RUN C:\\SYSTEM\\BROWSER.SHR');
+                else if (action === 'console') openConsoleWindow();
+                else if (action === 'pkgmgr') handleCommand('RUN C:\\SYSTEM\\PKG_MANAGER.SHR');
+                else if (action === 'exit') exitDesktop();
+                startMenu.style.display = 'none';
+            };
+        });
+        playSound('startup');
+    }
+
+    function exitDesktop() {
+        desktopActive = false; desktopRoot.style.display = 'none';
+        outputArea.style.display = 'block'; inputLine.style.display = 'flex';
+        desktopArea.innerHTML = ''; taskbarWindows.innerHTML = ''; shortcuts = [];
+        renderDisplay(); inputField.focus();
+    }
+
+    const ICON_WIDTH = 80, ICON_HEIGHT = 90, ICONS_PER_ROW = 4;
+    function createShortcut(name, icon, target) {
+        if (!desktopActive) return;
+        const el = document.createElement('div'); el.className = 'desktop-shortcut';
+        const idx = shortcuts.length;
+        el.style.left = (10 + (idx % ICONS_PER_ROW) * ICON_WIDTH) + 'px';
+        el.style.top = (10 + Math.floor(idx / ICONS_PER_ROW) * ICON_HEIGHT) + 'px';
+        el.innerHTML = `<div style="font-size:28px;">${icon}</div><div>${name}</div>`;
+        el.addEventListener('dblclick', () => {
+            if (target === 'FILE_MANAGER') handleCommand('RUN C:\\SYSTEM\\GUI\\FILE_MANAGER.SHGUI');
+            else if (target === 'BROWSER') handleCommand('RUN C:\\SYSTEM\\BROWSER.SHR');
+            else if (target === 'CONSOLE') openConsoleWindow();
+            else if (target === 'TERMINAL') launchTerminalWindow();
+            else if (target === 'PKG_MANAGER') handleCommand('RUN C:\\SYSTEM\\PKG_MANAGER.SHR');
+            else handleCommand('RUN ' + target);
+        });
+        el.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            contextTarget = el;
+            contextMenu.style.display = 'flex';
+            contextMenu.style.left = e.clientX - container.getBoundingClientRect().left + 'px';
+            contextMenu.style.top = e.clientY - container.getBoundingClientRect().top + 'px';
+            contextMenu.style.zIndex = 300;
+        });
+        desktopArea.appendChild(el); shortcuts.push({ name, icon, target, el });
+    }
+
+    function removeShortcut(name) {
+        if (!desktopActive) return;
+        const idx = shortcuts.findIndex(s => s.name === name || s.target === name);
+        if (idx !== -1) { shortcuts[idx].el.remove(); shortcuts.splice(idx, 1); shortcuts.forEach((s, i) => { s.el.style.left = (10 + (i % ICONS_PER_ROW) * ICON_WIDTH) + 'px'; s.el.style.top = (10 + Math.floor(i / ICONS_PER_ROW) * ICON_HEIGHT) + 'px'; }); }
+    }
+
+    // ==================== WINDOW CREATION (with sound) ====================
+    function createWindowInDesktop(title, html, opts = {}) {
+        if (!desktopActive) return null;
+        const win = document.createElement('div'); win.className = 'shrimp-window';
+        win.style.left = (opts.x || 50) + 'px'; win.style.top = (opts.y || 50) + 'px';
+        win.style.width = (opts.width || 300) + 'px'; win.style.height = (opts.height || 200) + 'px';
+        win.style.zIndex = 30 + windowsCount++;
+        win.innerHTML = `<div class="window-titlebar"><span class="window-title">${title}</span><div class="window-controls"><button class="win-btn minimize">–</button><button class="win-btn maximize">⬜</button><button class="win-btn close">✕</button></div></div><div class="win-body">${html}</div><div class="resize-handle"></div>`;
+        desktopArea.appendChild(win);
+        const tbBtn = document.createElement('button'); tbBtn.className = 'taskbar-btn'; tbBtn.textContent = title;
+        tbBtn.onclick = () => { if (win.style.display === 'none') { win.style.display = 'flex'; tbBtn.classList.add('active'); } else { win.style.display = 'none'; tbBtn.classList.remove('active'); } };
+        taskbarWindows.appendChild(tbBtn);
+        win.querySelector('.minimize').onclick = () => { win.style.display = 'none'; tbBtn.classList.remove('active'); };
+
+        let maximized = false; const titlebar = win.querySelector('.window-titlebar'); const maximizeBtn = win.querySelector('.maximize'); const resizeHandle = win.querySelector('.resize-handle'); let prevW, prevH, prevT, prevL;
+        maximizeBtn.onclick = () => { if (maximized) { win.style.top = prevT; win.style.left = prevL; win.style.width = prevW; win.style.height = prevH; titlebar.style.cursor = 'move'; resizeHandle.style.display = 'block'; maximized = false; } else { prevW = win.style.width; prevH = win.style.height; prevT = win.style.top; prevL = win.style.left; win.style.top = '0'; win.style.left = '0'; win.style.width = desktopArea.offsetWidth + 'px'; win.style.height = desktopArea.offsetHeight + 'px'; titlebar.style.cursor = 'default'; resizeHandle.style.display = 'none'; maximized = true; } };
+        win.querySelector('.close').onclick = () => { playSound('close'); win.remove(); tbBtn.remove(); };
+
+        let dragging = false, startX, startY, origLeft, origTop, dragOffX=0, dragOffY=0, dragRaf;
+        titlebar.addEventListener('pointerdown', (e) => { if (maximized || e.target.closest('.win-btn')) return; dragging = true; origLeft = parseInt(win.style.left)||0; origTop = parseInt(win.style.top)||0; startX = e.clientX; startY = e.clientY; titlebar.setPointerCapture(e.pointerId); e.preventDefault(); });
+        titlebar.addEventListener('pointermove', (e) => { if (!dragging || maximized) return; dragOffX = e.clientX - startX; dragOffY = e.clientY - startY; if (dragRaf) cancelAnimationFrame(dragRaf); dragRaf = requestAnimationFrame(() => { win.style.transform = `translate(${dragOffX}px, ${dragOffY}px)`; }); });
+        const stopDrag = (e) => { if (!dragging) return; dragging = false; if (dragRaf) { cancelAnimationFrame(dragRaf); dragRaf = null; } win.style.transform = ''; win.style.left = (origLeft + dragOffX) + 'px'; win.style.top = (origTop + dragOffY) + 'px'; titlebar.releasePointerCapture(e.pointerId); };
+        titlebar.addEventListener('pointerup', stopDrag); titlebar.addEventListener('pointercancel', stopDrag);
+
+        let resizing = false, rStartX, rStartY, origW, origH, resizeRaf;
+        resizeHandle.addEventListener('pointerdown', (e) => { if (maximized) return; resizing = true; origW = parseInt(win.style.width)||300; origH = parseInt(win.style.height)||200; rStartX = e.clientX; rStartY = e.clientY; resizeHandle.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation(); });
+        resizeHandle.addEventListener('pointermove', (e) => { if (!resizing) return; const dx = e.clientX - rStartX, dy = e.clientY - rStartY; if (resizeRaf) cancelAnimationFrame(resizeRaf); resizeRaf = requestAnimationFrame(() => { win.style.width = Math.max(200, origW + dx) + 'px'; win.style.height = Math.max(100, origH + dy) + 'px'; }); });
+        const stopResize = (e) => { if (!resizing) return; resizing = false; if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = null; } resizeHandle.releasePointerCapture(e.pointerId); };
+        resizeHandle.addEventListener('pointerup', stopResize); resizeHandle.addEventListener('pointercancel', stopResize);
+
+        win.addEventListener('pointerdown', () => { win.style.zIndex = 30 + windowsCount++; tbBtn.classList.add('active'); });
+        playSound('open');
+        return win;
+    }
+
+    // ==================== FILE MANAGER (compact names) ====================
+    function launchFileManager() {
+        if (!desktopActive) return;
+        const html = `<div style="display:flex; gap:5px; margin-bottom:5px; flex-wrap:wrap;"><button id="fm-up" class="taskbar-btn">⬆</button><button id="fm-home" class="taskbar-btn">🏠</button><span id="fm-path" style="flex:1; background:#0a0a0a; padding:5px; border-radius:4px; font-size:12px; color:#ccc;">C:\\</span><button id="fm-newdir" class="taskbar-btn">📁 New</button><button id="fm-newfile" class="taskbar-btn">📄 New</button><button id="fm-import" class="taskbar-btn">📥 Import</button><button id="fm-edit" class="taskbar-btn">📝 Edit</button><button id="fm-copy" class="taskbar-btn">📋 Copy</button><button id="fm-move" class="taskbar-btn">✂️ Move</button><button id="fm-del" class="taskbar-btn">🗑️</button><button id="fm-ren" class="taskbar-btn">✏️ Ren</button><button id="fm-pin" class="taskbar-btn">📌 Pin</button></div><div id="fm-files" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap:4px;"></div>`;
+        const win = createWindowInDesktop('File Manager', html, { width: 430, height: 350 });
+        if (!win) return;
+        const body = win.querySelector('.win-body'), pathEl = body.querySelector('#fm-path'), filesEl = body.querySelector('#fm-files');
+        let selFile = null;
+        function render() { const dir = getDir(); if (!dir) return; pathEl.textContent = pathStr(); let h = ''; if (cwd.length > 1) h += `<div class="fm-item" data-dir=".."><div class="fm-item-icon">↩️</div><div class="fm-item-name">..</div></div>`; const entries = Object.entries(dir).sort((a,b) => a[1].type!==b[1].type ? (a[1].type==='dir'?-1:1) : a[0].localeCompare(b[0])); for (const [name, info] of entries) { const icon = info.type === 'dir' ? '📁' : (name.endsWith('.shr')||name.endsWith('.shgui') ? '⚡' : '📄'); h += `<div class="fm-item" data-name="${esc(name)}" data-type="${info.type}"><div class="fm-item-icon">${icon}</div><div class="fm-item-name">${esc(name)}</div></div>`; } filesEl.innerHTML = h; filesEl.querySelectorAll('.fm-item').forEach(item => { item.addEventListener('click', (e) => { selFile = item.dataset.name; filesEl.querySelectorAll('.fm-item').forEach(el => el.style.background = ''); item.style.background = '#444'; }); item.addEventListener('dblclick', () => { const name = item.dataset.name, type = item.dataset.type; if (type === 'dir') { if (name === '..') cwd.pop(); else cwd.push(name); render(); } else openFileFromManager(name); }); }); }
+        body.querySelector('#fm-up').onclick = () => { if (cwd.length>1) { cwd.pop(); render(); } };
+        body.querySelector('#fm-home').onclick = () => { cwd=['C:']; render(); };
+        body.querySelector('#fm-newdir').onclick = async () => { const n = await showDialog('New Folder','Enter name:',{type:'prompt'}); if(n){const d=getDir();if(!d[n]){d[n]={type:'dir',children:{}};saveFS();showToast('Folder created','success');render();}else showToast('Exists','error');} };
+        body.querySelector('#fm-newfile').onclick = async () => { const n = await showDialog('New File','Enter name:',{type:'prompt'}); if(n){const d=getDir();if(!d[n]){d[n]={type:'file',content:''};saveFS();showToast('File created','success');render();}else showToast('Exists','error');} };
+        body.querySelector('#fm-import').onclick = () => fileImport.click();
+        body.querySelector('#fm-edit').onclick = () => { if(!selFile){showToast('Select a file','error');return;} const f=findInDir(selFile); if(!f||f.type==='dir'){showToast('Cannot edit','error');return;} openTextEditor(selFile,f.content); };
+        body.querySelector('#fm-copy').onclick = async () => { if(!selFile)return; const dest=await showDialog('Copy',`Destination:`,{type:'prompt',default:pathStr()+'\\'+selFile}); if(dest){try{if(copyFile(selFile,dest)){saveFS();showToast('Copied','success');render();}else showToast('Failed','error');}catch(e){showToast(e.message,'error');}} };
+        body.querySelector('#fm-move').onclick = async () => { if(!selFile)return; const dest=await showDialog('Move',`Destination:`,{type:'prompt',default:pathStr()+'\\'+selFile}); if(dest){try{if(moveFile(selFile,dest)){saveFS();selFile=null;showToast('Moved','success');render();}else showToast('Failed','error');}catch(e){showToast(e.message,'error');}} };
+        body.querySelector('#fm-del').onclick = async () => { if(!selFile)return; const d=getDir(),obj=d[selFile]; if(obj&&obj.type==='dir'&&Object.keys(obj.children).length){showToast('Not empty','error');return;} if(await showDialog('Delete',`${selFile}?`,{type:'confirm'})){delete d[selFile];saveFS();selFile=null;showToast('Deleted','success');render();} };
+        body.querySelector('#fm-ren').onclick = async () => { if(!selFile)return; const n=await showDialog('Rename','New name:',{type:'prompt',default:selFile}); if(n&&n!==selFile){const d=getDir();if(!d[n]){d[n]=d[selFile];delete d[selFile];saveFS();selFile=n;showToast('Renamed','success');render();}else showToast('Exists','error');} };
+        body.querySelector('#fm-pin').onclick = () => { if(!selFile)return; const pinned=shortcuts.some(s=>s.target===selFile||s.name===selFile); if(pinned){removeShortcut(selFile);showToast('Unpinned','info');}else{const f=findInDir(selFile);createShortcut(selFile,f&&f.type==='dir'?'📁':getFileIcon(selFile),selFile);showToast('Pinned','success');} };
+        render();
+    }
+
+    function openTextEditor(filename, content) {
+        const html = `<div style="display:flex; flex-direction:column; height:100%;"><textarea id="editor-textarea" style="flex:1; width:100%; background:#0a0a0a; color:#0f0; border:1px solid #444; padding:5px; font-family:monospace; font-size:12px; resize:none;">${esc(content)}</textarea><div style="display:flex; justify-content:flex-end; gap:5px; margin-top:5px;"><button id="editor-save" class="taskbar-btn">💾 Save</button><button id="editor-cancel" class="taskbar-btn">Cancel</button></div></div>`;
+        const win = createWindowInDesktop('Editing: ' + filename, html, { width: 400, height: 300 });
+        if (!win) return;
+        win.querySelector('#editor-save').onclick = () => { const nc = win.querySelector('#editor-textarea').value; const d=getDir(); if(d[filename]){d[filename].content=nc;saveFS();showToast('Saved','success');win.querySelector('.close').click();}else showToast('Not found','error'); };
+        win.querySelector('#editor-cancel').onclick = () => win.querySelector('.close').click();
+    }
+
+    function copyFile(src, dest) { const s = findInDir(src); if(!s) return false; const parts = dest.replace(/\\/g,'/').split('/'), dn = parts.pop(), dp = parts.join('/'); const old = [...cwd]; if (dp.startsWith('C:')) { cwd = ['C:']; const rest = dp.substring(2).split('/').filter(Boolean); for (const p of rest) { const d = getDir(); if (!d||!d[p]||d[p].type!=='dir') { cwd=old; return false; } cwd.push(p); } } else { cwd=old; return false; } const dd = getDir(); if (!dd||dd[dn]) { cwd=old; return false; } dd[dn] = JSON.parse(JSON.stringify(s)); cwd=old; return true; }
+    function moveFile(src, dest) { const s = findInDir(src); if(!s) return false; const parts = dest.replace(/\\/g,'/').split('/'), dn = parts.pop(), dp = parts.join('/'); const old = [...cwd]; if (dp.startsWith('C:')) { cwd = ['C:']; const rest = dp.substring(2).split('/').filter(Boolean); for (const p of rest) { const d = getDir(); if (!d||!d[p]||d[p].type!=='dir') { cwd=old; return false; } cwd.push(p); } } else { cwd=old; return false; } const dd = getDir(); if (!dd||dd[dn]) { cwd=old; return false; } dd[dn] = s; cwd=old; const sd = getDir(); if (sd&&sd[src]) { delete sd[src]; return true; } return false; }
+
+    function openFileFromManager(filename) { const file = findInDir(filename); if (!file || file.type !== 'file') return; const ext = filename.split('.').pop().toLowerCase(); if (ext === 'shr' || ext === 'shgui') launchTerminalWindow(filename); else if (ext === 'txt' || ext === 'md') openTextEditor(filename, file.content); else if (ext === 'html') { const win = createWindowInDesktop('Viewing: ' + filename, `<iframe sandbox="allow-scripts" style="width:100%; height:100%; border:none; background:#fff;" srcdoc="${esc(file.content)}"></iframe>`, {width:400, height:350}); } else openTextEditor(filename, file.content); }
+
+    function launchTerminalWindow(scriptName) {
+        if (!scriptName) { const html = `<div id="term-output" style="background:#0a0a0a; color:#0f0; font-family:monospace; font-size:12px; padding:5px; height:calc(100% - 30px); overflow-y:auto; white-space:pre-wrap;"></div><div style="display:flex;"><span style="color:#0f0;">C:\\&gt;</span><input id="term-input" type="text" style="flex:1; background:transparent; border:none; color:#0f0; font-family:monospace; font-size:12px; outline:none;"></div>`; const win = createWindowInDesktop('Terminal', html, { width: 350, height: 250 }); if (!win) return; const outEl = win.querySelector('#term-output'), inputEl = win.querySelector('#term-input'); let localHist = [], localIdx = -1; const append = (t,c='#0f0') => { outEl.innerHTML += `<span style="color:${c}">${esc(t)}</span>\n`; outEl.scrollTop = outEl.scrollHeight; }; inputEl.addEventListener('keydown', async (e) => { if (e.key==='Enter') { const cmd = inputEl.value.trim(); inputEl.value = ''; localHist.push(cmd); localIdx = localHist.length; append(`C:\\> ${cmd}`, '#fff'); const orig = window._shrimpOut; window._shrimpOut = (t,ty) => { let col='#0f0'; if(ty==='error')col='#f44'; else if(ty==='highlight')col='#ff0'; t.split('\n').forEach(l=>append(l,col)); }; try { await handleCommand(cmd); } finally { window._shrimpOut = orig; } } else if (e.key==='ArrowUp') { e.preventDefault(); if(localHist.length&&localIdx>0){localIdx--;inputEl.value=localHist[localIdx];} } else if (e.key==='ArrowDown') { e.preventDefault(); if(localIdx<localHist.length-1){localIdx++;inputEl.value=localHist[localIdx];} else {localIdx=localHist.length;inputEl.value='';} } }); return; }
+        const sf = resolvePath(scriptName) || findInDir(scriptName); if (!sf || sf.type!=='file') { showToast('Not found','error'); return; }
+        const html = `<div id="term-output" style="background:#0a0a0a; color:#0f0; font-family:monospace; font-size:12px; padding:5px; height:100%; overflow-y:auto; white-space:pre-wrap;"></div>`;
+        const win = createWindowInDesktop('Running: ' + scriptName, html, { width: 400, height: 300 }); if (!win) return;
+        const outEl = win.querySelector('#term-output'); const append = (t,c='#0f0') => { outEl.innerHTML += `<span style="color:${c}">${esc(t)}</span>\n`; outEl.scrollTop = outEl.scrollHeight; };
+        window._shrimpOut = (t,ty) => { let col='#0f0'; if(ty==='error')col='#f44'; else if(ty==='highlight')col='#ff0'; t.split('\n').forEach(l=>append(l,col)); };
+        executeScript(scriptName, sf.content).then(() => { window._shrimpOut = null; });
+    }
+
+    // ==================== COMMAND HANDLER ====================
+    async function handleCommand(cmdLine) {
+        if (!cmdLine.trim()) return; const line = cmdLine.trim(); const promptStr = editMode ? `(edit) ${editFile}` : pathStr();
+        flushAll(); displayLines.push({ text: `${promptStr}> ${line}`, type: 'command' }); renderDisplay();
+        if (editMode) { processEditLine(line); return; }
+        history.push(line); if (history.length > 100) history.shift(); histIdx = history.length;
+        const parts = parse(line); const cmd = parts[0].toUpperCase(); const args = parts.slice(1);
+        if (cmd === 'RUN') { if (args.length === 0) { out('Usage: RUN <file>', 'error'); return; } let fname = args[0]; if (!fname.toUpperCase().endsWith('.SHR') && !fname.toUpperCase().endsWith('.SHGUI')) fname += '.SHR'; const f = resolvePath(fname) || findInDir(fname); if (!f || f.type !== 'file') { out(`Not found: ${fname}`, 'error'); if (desktopActive) showToast(`Not found: ${fname}`, 'error'); return; } await executeScript(f.name, f.content, args.slice(1)); return; }
+        if (cmd === 'DESKTOP') { const df = resolvePath('C:\\SYSTEM\\GUI\\DESKTOP.SHGUI'); if (df && df.type === 'file') await executeScript('DESKTOP.SHGUI', df.content); else { out('Desktop not found.', 'error'); if (desktopActive) showToast('Desktop not found', 'error'); } return; }
+        if (cmd === 'PKG') { await pkgCommand(args); return; }
+        if (!['HELP','CLS','DATE','TIME','WHOAMI','SYSINFO','PING','NETSTAT','UPTIME','ECHO','COLOR','DIR','CD','MD','RD','TYPE','DEL','REN','TREE','COPY','MOVE','EDIT','IMPORT','EXPORT','ANIM','RUN','EXIT','GET','ASK','BROWSE','OPEN','BROWSER','FILE_MANAGER','DESKTOP','CONSOLE','TERMINAL','PKG','PKG_MANAGER'].includes(cmd)) { let sf = resolvePath(cmd+'.SHGUI') || resolvePath(cmd+'.SHR') || resolvePath(cmd); if (sf && sf.type==='file' && (sf.name.toUpperCase().endsWith('.SHGUI')||sf.name.toUpperCase().endsWith('.SHR'))) { await executeScript(sf.name, sf.content); return; } }
+        try { await executeCommand(cmd, args); } catch(e) { out('Error: '+e.message, 'error'); if (desktopActive) showToast(e.message, 'error'); playSound('error'); }
+    }
+    function parse(str) { const parts = []; let cur = '', inQ = false; for (const ch of str) { if (ch === '"') { inQ = !inQ; cur += ch; } else if (ch === ' ' && !inQ) { if (cur) parts.push(cur); cur = ''; } else cur += ch; } if (cur) parts.push(cur); return parts; }
+    async function executeCommand(cmd, args) {
+        switch(cmd) {
+            case 'HELP': out('Commands: DIR, CD, MD, RD, TYPE, DEL, REN, TREE, COPY, MOVE, EDIT, IMPORT, EXPORT, DATE, TIME, WHOAMI, SYSINFO, PING, NETSTAT, UPTIME, ECHO, COLOR, CLS, ANIM, GET, ASK, BROWSE, OPEN, RUN, DESKTOP, FILE_MANAGER, BROWSER, CONSOLE, PKG'); break;
+            case 'CLS': clearOut(); if (desktopActive) consoleLines = []; break;
+            case 'DATE': out(new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})); break;
+            case 'TIME': out(new Date().toLocaleTimeString()); break;
+            case 'WHOAMI': out(navigator.userAgent); break;
+            case 'SYSINFO': out(`Screen: ${screen.width}x${screen.height} | Cores: ${navigator.hardwareConcurrency||'?'} | Online: ${navigator.onLine}`); break;
+            case 'PING': await ping(args); break;
+            case 'NETSTAT': out(`Online: ${navigator.onLine}`); break;
+            case 'UPTIME': out(`Uptime: ${Math.floor((Date.now()-startTime)/1000)}s`); break;
+            case 'ECHO': out(args.join(' ')); break;
+            case 'COLOR': setTheme(args[0]); break;
+            case 'DIR': dir(); break;
+            case 'CD': cd(args); break;
+            case 'MD': md(args); break;
+            case 'RD': rd(args); break;
+            case 'TYPE': type(args); break;
+            case 'DEL': del(args); break;
+            case 'REN': ren(args); break;
+            case 'TREE': tree(); break;
+            case 'COPY': copy(args); break;
+            case 'MOVE': move(args); break;
+            case 'EDIT': startEdit(args); break;
+            case 'IMPORT': importFile(); break;
+            case 'EXPORT': exportFile(args); break;
+            case 'GET': await getCommand(args); break;
+            case 'ASK': await askCommand(args); break;
+            case 'BROWSE': await browseCommand(args); break;
+            case 'OPEN': await openCommand(args); break;
+            case 'BROWSER': handleCommand('RUN C:\\SYSTEM\\BROWSER.SHR'); break;
+            case 'FILE_MANAGER': handleCommand('RUN C:\\SYSTEM\\GUI\\FILE_MANAGER.SHGUI'); break;
+            case 'CONSOLE': if (desktopActive) openConsoleWindow(); else out('Open console in desktop mode.', 'error'); break;
+            case 'TERMINAL': if (desktopActive) launchTerminalWindow(); else out('Terminal is already active.', 'normal'); break;
+            case 'PKG_MANAGER': handleCommand('RUN C:\\SYSTEM\\PKG_MANAGER.SHR'); break;
+            default: out(`'${cmd}' not recognized.`, 'error');
+        }
+    }
+
+    // Basic commands (same as before)
+    function dir() { const d = getDir(); if (!d) return out('Invalid','error'); out(` Directory of ${pathStr()}`,'highlight'); let f=0,dir=0; const entries = Object.entries(d).sort((a,b)=>a[1].type!==b[1].type?(a[1].type==='dir'?-1:1):a[0].localeCompare(b[0])); if (cwd.length>1) { out('.            <DIR>'); out('..           <DIR>'); dir+=2; } for (const [n,i] of entries) { if (i.type==='dir'){out(`${pad(n,12)} <DIR>`,'highlight');dir++;} else {out(`${pad(n,12)} ${String(i.content?i.content.length:0).padStart(6)} bytes`);f++;} } out(`        ${f} file(s)  ${dir} dir(s)`); }
+    function cd(args) { if(!args.length)return out(pathStr()); if(args[0]==='\\'){cwd=['C:'];return;} if(args[0]==='..'){if(cwd.length>1)cwd.pop();return;} const f=findInDir(args[0]); if(!f||f.type!=='dir'){out('Not found','error');return;} cwd.push(f.name); }
+    function md(args) { if(!args.length){out('Syntax: MD <dir>','error');return;} const d=getDir(); if(findInDir(args[0])){out('Exists','error');return;} d[args[0]]={type:'dir',children:{}};saveFS();out('Created'); }
+    function rd(args) { if(!args.length){out('Syntax: RD <dir>','error');return;} const d=getDir(); const f=findInDir(args[0]); if(!f||f.type!=='dir'){out('Not found','error');return;} if(Object.keys(f.children).length){out('Not empty','error');return;} delete d[f.name];saveFS();out('Removed'); }
+    function type(args) { if(!args.length){out('Syntax: TYPE <file>','error');return;} const f=findInDir(args[0]); if(!f||f.type!=='file'){out('Not found','error');return;} out(f.content||'(empty)'); }
+    function del(args) { if(!args.length){out('Syntax: DEL <file>','error');return;} const d=getDir(); const f=findInDir(args[0]); if(!f||f.type!=='file'){out('Not found','error');return;} delete d[f.name];saveFS();out('Deleted'); }
+    function ren(args) { if(args.length<2){out('Syntax: REN <old> <new>','error');return;} const d=getDir(); const f=findInDir(args[0]); if(!f){out('Not found','error');return;} if(findInDir(args[1])){out('Exists','error');return;} d[args[1]]=f;delete d[f.name];saveFS();out('Renamed'); }
+    function tree() { const d=getDir(); if(!d)return; out(pathStr(),'highlight'); function p(node,ind){ Object.entries(node).sort((a,b)=>a[1].type!==b[1].type?(a[1].type==='dir'?-1:1):a[0].localeCompare(b[0])).forEach(([n,i],idx)=>{ const last=idx===Object.keys(node).length-1; out(ind+(last?'└── ':'├── ')+(i.type==='dir'?n+'\\':n), i.type==='dir'?'highlight':'normal'); if(i.type==='dir')p(i.children,ind+(last?'    ':'│   ')); }); } p(d,''); }
+    function copy(args) { if(args.length<2){out('Syntax: COPY <src> <dest>','error');return;} const s=findInDir(args[0]); if(!s){out('Not found','error');return;} const d=getDir(); if(findInDir(args[1])){out('Exists','error');return;} d[args[1]]=JSON.parse(JSON.stringify(s));saveFS();out('Copied'); }
+    function move(args) { if(args.length<2){out('Syntax: MOVE <src> <dest>','error');return;} const s=findInDir(args[0]); if(!s){out('Not found','error');return;} const d=getDir(); if(findInDir(args[1])){out('Exists','error');return;} d[args[1]]=s;delete d[args[0]];saveFS();out('Moved'); }
+    function startEdit(args) { if(!args.length){out('Syntax: EDIT <file>','error');return;} const f=findInDir(args[0]); if(f&&f.type==='dir'){out('Cannot edit dir','error');return;} editMode=true;editFile=args[0];editLines=f?f.content.split('\n'):[]; out(`Editing ${editFile}. :EOF to save, :q! to abort.`); editLines.forEach((l,i)=>out(`${i+1}: ${l}`)); }
+    function processEditLine(line) { if(line===':EOF'){const d=getDir();d[editFile]={type:'file',content:editLines.join('\n')};saveFS();out(`Saved ${editFile}`,'highlight');editMode=false;} else if(line===':q!'){out('Aborted','error');editMode=false;} else {editLines.push(line);out(`${editLines.length}: ${line}`);} }
+    function importFile() { fileImport.click(); }
+    fileImport.addEventListener('change', function(e) { const file=e.target.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=function(ev){const d=getDir();if(!d)return; d[file.name]={type:'file',content:ev.target.result};saveFS();out(`Imported ${file.name}`,'highlight');if(desktopActive)showToast(`Imported ${file.name}`,'success');}; reader.readAsText(file);fileImport.value=''; });
+    function exportFile(args) { if(!args.length){out('Syntax: EXPORT <file>','error');return;} const f=findInDir(args[0]); if(!f||f.type!=='file'){out('Not found','error');return;} const blob=new Blob([f.content],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=f.name;a.click();URL.revokeObjectURL(url);out('Download started'); }
+    async function ping(args) { const host=args[0]||'google.com'; if(!navigator.onLine){out('Offline','error');return;} out(`Pinging ${host}...`); const start=performance.now(); try{await fetch(`https://${host}`,{mode:'no-cors'});out(`Reply: ${Math.round(performance.now()-start)}ms`,'highlight');} catch(e){out('Failed','error');} }
+    let startTime = Date.now();
+    function setTheme(t) { const valid=['green','amber','white','shrimp']; if(!valid.includes(t)){out('Usage: COLOR [green|amber|white|shrimp]','error');return;} theme=t; container.className=''; if(t!=='green')container.classList.add('theme-'+t); themeBtns.forEach(b=>b.classList.toggle('active',b.dataset.theme===t)); updatePrompt(); }
+    function pad(s,l){return s+' '.repeat(Math.max(0,l-s.length));}
+
+    // Web commands
+    async function getCommand(args) { if(!args.length){out('Usage: GET <url>','error');return;} out(`Fetching ${args[0]}...`); const text=await robustFetch(args[0]); out(text.substring(0,2000)); flushAll(); }
+    async function askCommand(args) { if(!args.length){out('Usage: ASK <query>','error');return;} const q=args.join(' '); try{const url=`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1`; const res=await fetch(url); if(!res.ok)throw new Error('HTTP '+res.status); const d=await res.json(); if(d.AbstractText)out('Abstract: '+d.AbstractText); if(d.RelatedTopics&&d.RelatedTopics.length){out('\nRelated:'); d.RelatedTopics.slice(0,5).forEach((t,i)=>{if(t.Text)out(`${i+1}. ${t.Text}`);});}else out('No results');} catch(e){out('Search failed: '+e.message,'error');} flushAll(); }
+    const REGISTRY_URL = 'https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/sitedata.json';
+    async function fetchRegistry() { if(siteRegistryCache)return siteRegistryCache; const res=await fetch(REGISTRY_URL); if(!res.ok)throw new Error('Registry offline'); siteRegistryCache=await res.json(); return siteRegistryCache; }
+    async function browseCommand(args) { if(!args.length){out('Usage: BROWSE <query>','error');return;} const q=args.join(' ').toLowerCase(); try{const reg=await fetchRegistry(); const results=reg.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.url||'').toLowerCase().includes(q)||(s.desc||'').toLowerCase().includes(q)); lastBrowseResults=results; if(results.length){results.forEach((s,i)=>out(`${i+1}. ${s.name} (${s.url})`));}else out('No matches');} catch(e){out(e.message,'error');} flushAll(); }
+    async function openCommand(args) { if(!args.length){out('Usage: OPEN <num>','error');return;} if(!lastBrowseResults.length){out('No results','error');return;} const idx=parseInt(args[0])-1; const site=(idx>=0&&idx<lastBrowseResults.length)?lastBrowseResults[idx]:lastBrowseResults.find(s=>s.name.toLowerCase()===args.join(' ').toLowerCase()); if(!site){out('Not found','error');return;} await getCommand([site.url]); }
+
+    function getFileIcon(filename) { const file = resolvePath(filename) || findInDir(filename); if (!file || file.type !== 'file') return '📄'; const content = file.content || ''; const sep = '\n===\n'; const idx = content.indexOf(sep); if (idx === -1) return '⚡'; try { const header = JSON.parse(content.substring(0, idx)); return header.icon || '⚡'; } catch(e) { return '⚡'; } }
+
+    function scanPrograms() { const dir = fsRoot['C:'].children['PROGRAMS']; if (!dir || dir.type !== 'dir') return []; const result = []; for (const [name, info] of Object.entries(dir.children)) { if (info.type !== 'file') continue; const ext = name.split('.').pop().toLowerCase(); if (ext !== 'shr' && ext !== 'shgui') continue; const sep = '\n===\n'; const idx = info.content.indexOf(sep); let pname = name, icon = '⚡'; if (idx !== -1) { try { const h = JSON.parse(info.content.substring(0, idx)); pname = h.name || name; icon = h.icon || '⚡'; } catch(e) {} } result.push({ name: pname, icon, path: 'C:\\PROGRAMS\\' + name }); } return result; }
+
+    // ==================== PACKAGE MANAGER (no auto-shortcut) ====================
+    const PKG_INDEX_URL = 'https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/pkg_index.json';
+
+    async function pkgCommand(args) {
+        const sub = (args[0] || '').toUpperCase();
+        if (sub === 'INSTALL') {
+            if (args.length < 2) { out('Usage: PKG INSTALL <name>', 'error'); return; }
+            const name = args[1];
+            try {
+                const index = await fetch(PKG_INDEX_URL).then(r => r.json());
+                const pkg = index.find(p => p.name === name || p.file === name);
+                if (!pkg) { out(`Package "${name}" not found.`, 'error'); return; }
+                out(`Installing ${pkg.name}...`);
+                const code = await fetch(pkg.url).then(r => r.text());
+                const progDir = fsRoot['C:'].children['PROGRAMS'];
+                if (!progDir) { fsRoot['C:'].children['PROGRAMS'] = { type:'dir', children:{} }; }
+                const fileName = pkg.file || (pkg.name + '.shr');
+                progDir.children[fileName] = { type:'file', content: code };
+                saveFS();
+                out(`${pkg.name} installed to C:\\PROGRAMS\\${fileName}`,'highlight');
+                if (desktopActive) showToast(`${pkg.name} installed – you can pin it manually.`,'success');
+            } catch(e) { out('Install failed: ' + e.message, 'error'); }
+        } else if (sub === 'LIST') {
+            try { const index = await fetch(PKG_INDEX_URL).then(r => r.json()); out('Available packages:'); index.forEach(p => out(`${p.name} - ${p.desc||''}`)); } catch(e) { out('Could not fetch package list.', 'error'); }
+        } else if (sub === 'REMOVE') {
+            if (args.length < 2) { out('Usage: PKG REMOVE <name>', 'error'); return; }
+            const name = args[1];
+            const progDir = fsRoot['C:'].children['PROGRAMS'];
+            if (!progDir) { out('No packages installed.', 'error'); return; }
+            const file = Object.keys(progDir.children).find(f => f === name || f === name + '.shr' || f === name + '.shgui');
+            if (!file) { out(`Package "${name}" not found.`, 'error'); return; }
+            delete progDir.children[file];
+            saveFS();
+            out(`Removed ${file}.`, 'highlight');
+            if (desktopActive) { removeShortcut(name); showToast(`${name} removed`,'info'); }
+        } else { out('Usage: PKG [INSTALL|LIST|REMOVE] <name>', 'error'); }
+    }
+
+    function launchPkgManager() {
+        if (!desktopActive) return;
+        const html = `<div style="display:flex; flex-direction:column; height:100%;"><div id="pkg-list" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div><div style="display:flex; gap:5px; margin-top:8px;"><button id="pkg-refresh" class="taskbar-btn">🔄 Refresh</button></div></div>`;
+        const win = createWindowInDesktop('Package Manager', html, { width: 380, height: 320 }); if (!win) return;
+        const listEl = win.querySelector('#pkg-list');
+        async function renderList() {
+            listEl.innerHTML = '<p style="color:#888;">Loading...</p>';
+            try {
+                const index = await fetch(PKG_INDEX_URL).then(r => r.json());
+                const installed = fsRoot['C:'].children['PROGRAMS']?.children || {};
+                listEl.innerHTML = '';
+                index.forEach(pkg => {
+                    const installedFile = Object.keys(installed).find(f => f === pkg.file || f === pkg.name + '.shr' || f === pkg.name + '.shgui');
+                    const isInstalled = !!installedFile;
+                    const btnText = isInstalled ? '🗑️ Remove' : '⬇ Install';
+                    const item = document.createElement('div');
+                    item.style.cssText = 'background:#222; border-radius:8px; padding:8px; display:flex; align-items:center; gap:8px;';
+                    item.innerHTML = `<span style="font-size:24px;">${pkg.icon || '📦'}</span><div style="flex:1;"><div style="font-weight:bold; color:#ccc;">${pkg.name}</div><div style="font-size:11px; color:#888;">${pkg.desc || ''}</div></div><button class="taskbar-btn" style="background:${isInstalled ? '#a33' : '#2a2'}; color:#fff;">${btnText}</button>`;
+                    item.querySelector('button').onclick = async () => {
+                        if (isInstalled) { await pkgCommand(['REMOVE', pkg.file || pkg.name]); renderList(); }
+                        else { await pkgCommand(['INSTALL', pkg.file || pkg.name]); renderList(); }
+                    };
+                    listEl.appendChild(item);
+                });
+            } catch(e) { listEl.innerHTML = `<p style="color:#f44;">Error: ${e.message}</p>`; }
+        }
+        win.querySelector('#pkg-refresh').onclick = renderList;
+        renderList();
+    }
+
+    // ==================== SCRIPT EXECUTION ====================
+    async function executeScript(filename, content, args = []) {
+        out(`Running ${filename}...`, 'highlight');
+        const sep = '\n===\n'; let code = content; const idx = content.indexOf(sep);
+        if (idx !== -1) { try { JSON.parse(content.substring(0, idx)); } catch(e) {} code = content.substring(idx + sep.length); }
+        if (!code.trim()) return;
+
+        const shrimpAPI = {
+            echo: (t) => { (window._shrimpOut || out)(String(t), 'normal'); },
+            println: (t) => { (window._shrimpOut || out)(String(t)+'\n', 'normal'); },
+            dir: () => { const d = getDir(); return d ? Object.keys(d) : []; },
+            cd: (p) => { if(p==='\\'){cwd=['C:'];return true;} if(p==='..'){if(cwd.length>1)cwd.pop();return true;} const f=findInDir(p); if(f&&f.type==='dir'){cwd.push(f.name);return true;} throw new Error('Not found'); },
+            mkdir: (n) => { const d=getDir(); if(!d[n]){d[n]={type:'dir',children:{}};saveFS();} },
+            type: (f) => { const fc=(resolvePath(f)||findInDir(f))?.content; if(fc===undefined)throw new Error('Not found'); return fc; },
+            tree: () => { const d=getDir(); if(!d)return''; let res=pathStr()+'\n'; function p(node,ind){ Object.entries(node).sort((a,b)=>a[1].type!==b[1].type?(a[1].type==='dir'?-1:1):a[0].localeCompare(b[0])).forEach(([n,i],idx)=>{ const last=idx===Object.keys(node).length-1; res+=ind+(last?'└── ':'├── ')+(i.type==='dir'?n+'\\\n':n+'\n'); if(i.type==='dir')p(i.children,ind+(last?'    ':'│   ')); }); } p(d,''); return res; },
+            path: () => pathStr(), readFile: (f) => { const fc=(resolvePath(f)||findInDir(f))?.content; if(fc===undefined)throw new Error('Not found'); return fc; },
+            writeFile: (f,c) => { getDir()[f]={type:'file',content:c}; saveFS(); }, exists: (f) => !!(resolvePath(f)||findInDir(f)),
+            args, setVar: (k,v)=>{globalVars[k]=v;}, getVar: (k)=>globalVars[k], sleep: (ms) => new Promise(r=>setTimeout(r,ms)), exit: ()=>{throw new Error('__EXIT__');},
+            beep: (f=440,d=500) => playTone(f, d/1000, 'square', 0.1), speak: (t) => speechSynthesis.speak(new SpeechSynthesisUtterance(t)), vibrate: (p) => navigator.vibrate(p),
+            alert: (t,m) => showDialog(t,m,{type:'alert'}), confirm: (t,m) => showDialog(t,m,{type:'confirm'}), prompt: (t,m,d) => showDialog(t,m,{type:'prompt',default:d}),
+            notify: (m,type) => showToast(m,type||'info'), playSound: (n) => playSound(n),
+            fetch: async (u) => robustFetch(u), ask: async (q) => { /*...*/ return ''; }, browse: async (q) => { /*...*/ return []; },
+            openSite: async (n) => { /*...*/ return ''; },
+            createDesktop: () => createDesktop(), createShortcut: (n,i,t) => createShortcut(n,i,t), removeShortcut: (n) => removeShortcut(n),
+            launchFileManager: () => launchFileManager(), launchBrowser: () => launchBrowser(), createWindow: (t,h,o) => createWindowInDesktop(t,h,o),
+            launchPkgManager: () => launchPkgManager(),
+            scanPrograms: () => scanPrograms(), getFileIcon: (f) => getFileIcon(f), run: (cmd) => handleCommand(cmd)
+        };
+        try { const fn = new Function('shrimp', `"use strict";\n${code}`); await fn(shrimpAPI); (window._shrimpOut || out)(`Script finished.`, 'highlight'); }
+        catch(e) { if (e.message === '__EXIT__') (window._shrimpOut || out)('Exited.', 'highlight'); else { (window._shrimpOut || out)(`Error: ${e.message}`, 'error'); if (desktopActive) showDialog('Script Error', e.message, {type:'alert'}); playSound('error'); } }
+    }
+
+    async function robustFetch(url) { try { const r=await fetch(url,{mode:'cors'}); if(r.ok)return await r.text(); } catch(e){} try { const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url)); if(r.ok)return await r.text(); } catch(e){} try { const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)); if(r.ok)return await r.text(); } catch(e){} throw new Error('Failed to fetch'); }
+
+    // ==================== BROWSER (unchanged) ====================
+    function launchBrowser() {
+        if (!desktopActive) return;
+        const bookmarksKey = 'shrimp-browser-bookmarks', historyKey = 'shrimp-browser-history';
+        let bookmarks = JSON.parse(localStorage.getItem(bookmarksKey) || '[]');
+        let historyUrls = JSON.parse(localStorage.getItem(historyKey) || '[]');
+        function saveBookmarks() { localStorage.setItem(bookmarksKey, JSON.stringify(bookmarks)); }
+        function addHistory(url) { historyUrls = [url, ...historyUrls.filter(u => u !== url)].slice(0, 50); localStorage.setItem(historyKey, JSON.stringify(historyUrls)); }
+        let tabs = [{ title: 'New Tab', url: '', srcdoc: '<p style="text-align:center; color:#888; padding-top:40px;">🦐 Shrimp Browser – Enter a URL or search</p>', history: [] }];
+        let activeTab = 0; let darkMode = false;
+
+        const html = `<div style="display:flex; flex-direction:column; height:100%;"><div class="browser-tabs" id="browser-tabs"></div><div style="display:flex; align-items:center; gap:4px; background:#2a2a2a; padding:4px 8px; border-bottom:1px solid #444;"><button id="new-tab-btn" style="background:transparent; border:none; color:#ccc; font-size:16px; cursor:pointer;">＋</button><button id="back-btn" style="background:transparent; border:none; color:#ccc; font-size:16px; cursor:pointer;">◀</button><button id="forward-btn" style="background:transparent; border:none; color:#ccc; font-size:16px; cursor:pointer;">▶</button><button id="refresh-btn" style="background:transparent; border:none; color:#ccc; font-size:16px; cursor:pointer;">⟳</button><input id="url-bar" type="text" placeholder="Search or enter URL" style="flex:1; padding:5px 8px; background:#111; color:#fff; border:1px solid #555; border-radius:12px; outline:none; font-size:13px;"><button id="bookmark-btn" style="background:transparent; border:none; color:#ccc; font-size:14px; cursor:pointer;">⭐</button><button id="history-btn" style="background:transparent; border:none; color:#ccc; font-size:14px; cursor:pointer;">🕒</button><button id="darkmode-btn" style="background:transparent; border:none; color:#ccc; font-size:14px; cursor:pointer;">🌙</button></div><iframe id="web-frame" sandbox="allow-scripts" style="flex:1; border:none; background:#fff;" src="about:blank"></iframe></div>`;
+        const win = createWindowInDesktop('Shrimp Browser', html, { width: 440, height: 400 }); if (!win) return;
+        const containerEl = win.querySelector('.win-body'); const tabsEl = containerEl.querySelector('#browser-tabs'); const urlBar = containerEl.querySelector('#url-bar'); const iframe = containerEl.querySelector('#web-frame');
+
+        function renderTabs() { tabsEl.innerHTML = tabs.map((t, i) => `<div class="browser-tab ${i === activeTab ? 'active' : ''}" data-index="${i}"><span class="tab-title">${t.title.substring(0, 15)}</span><span class="close-tab" data-index="${i}">×</span></div>`).join(''); tabsEl.querySelectorAll('.browser-tab').forEach(tab => { tab.addEventListener('click', (e) => { if (e.target.classList.contains('close-tab')) { const idx = parseInt(e.target.dataset.index); if (tabs.length > 1) { tabs.splice(idx, 1); if (activeTab >= idx) activeTab = Math.max(0, activeTab - 1); } else { tabs = [{ title: 'New Tab', url: '', srcdoc: '<p style="text-align:center; color:#888; padding-top:40px;">🦐 Shrimp Browser</p>', history: [] }]; activeTab = 0; } renderTabs(); loadTab(activeTab); } else { activeTab = parseInt(tab.dataset.index); renderTabs(); loadTab(activeTab); } }); }); }
+        function loadTab(idx) { const tab = tabs[idx]; urlBar.value = tab.url || ''; iframe.srcdoc = tab.srcdoc || '<p style="text-align:center; color:#888; padding-top:40px;">🦐 Shrimp Browser</p>'; if (darkMode) iframe.style.filter = 'invert(90%) hue-rotate(180deg)'; else iframe.style.filter = ''; }
+        async function navigate(url) { if (!url.startsWith('http')) url = 'https://' + url; const tab = tabs[activeTab]; tab.url = url; tab.title = url; urlBar.value = url; try { const text = await robustFetch(url); tab.srcdoc = text; iframe.srcdoc = text; addHistory(url); } catch(e) { iframe.srcdoc = `<h2>Error</h2><p>${e.message}</p>`; tab.srcdoc = iframe.srcdoc; } renderTabs(); }
+        async function doSearch(query) { const tab = tabs[activeTab]; tab.title = query; tab.url = query; urlBar.value = query; try { const [web, zest] = await Promise.all([askAPI(query).catch(e=>'Web search failed.'), browseAPI(query).catch(e=>[])]); let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif; padding:15px; background:#f5f5f5;} h2{color:#333;} .card{background:#fff; padding:10px; border-radius:8px; margin:8px 0; box-shadow:0 1px 3px rgba(0,0,0,0.1);} .zest-link{color:#1a0dab; cursor:pointer;}</style></head><body><h2>Results for "${query}"</h2>`; if (typeof web === 'string' && web !== 'No results.') html += `<div class="card"><strong>Web:</strong><br>${web.replace(/\n/g,'<br>')}</div>`; if (Array.isArray(zest) && zest.length) { zest.forEach(s => html += `<div class="card"><div class="zest-link" data-url="${s.url}">${s.name} (${s.url})</div></div>`); } html += `</body></html>`; tab.srcdoc = html; iframe.srcdoc = html; iframe.addEventListener('load', function h() { const doc = iframe.contentDocument || iframe.contentWindow.document; if (doc) doc.querySelectorAll('.zest-link').forEach(l => l.onclick = () => { let raw = l.dataset.url; if(raw.startsWith('https://github.com/')){const p=raw.replace('https://github.com/','').split('/');raw=`https://shrht.netlify.app/?repo=${p[0]}/${p[1]}`;} navigate(raw); }); iframe.removeEventListener('load', h); }); } catch(e) { iframe.srcdoc = `<h2>Search error</h2><p>${e.message}</p>`; } renderTabs(); }
+
+        urlBar.addEventListener('keydown', e => { if (e.key === 'Enter') { const v = urlBar.value.trim(); if (/^https?:\/\/.+/.test(v) || /^.+\..+$/.test(v) && !v.includes(' ')) navigate(v); else doSearch(v); } });
+        containerEl.querySelector('#new-tab-btn').onclick = () => { tabs.push({ title: 'New Tab', url: '', srcdoc: '<p style="text-align:center; color:#888; padding-top:40px;">🦐 New Tab</p>', history: [] }); activeTab = tabs.length - 1; renderTabs(); loadTab(activeTab); };
+        containerEl.querySelector('#refresh-btn').onclick = () => { const cur = urlBar.value.trim(); if(cur){ if(/^https?:\/\/.+/.test(cur)||/^.+\..+$/.test(cur)&&!cur.includes(' ')) navigate(cur); else doSearch(cur); } };
+        containerEl.querySelector('#bookmark-btn').onclick = () => { const tab = tabs[activeTab]; if (!tab.url) return; const exists = bookmarks.find(b => b.url === tab.url); if (exists) { bookmarks = bookmarks.filter(b => b.url !== tab.url); showToast('Bookmark removed','info'); } else { bookmarks.push({ title: tab.title, url: tab.url }); showToast('Bookmarked','success'); } saveBookmarks(); };
+        containerEl.querySelector('#history-btn').onclick = () => { let histHtml = '<div style="max-height:150px; overflow-y:auto; font-size:12px;">'; if (historyUrls.length === 0) histHtml += '<p>No history</p>'; else historyUrls.forEach((u, i) => histHtml += `<div style="cursor:pointer; color:#88f; margin:2px;" data-url="${u}">${u}</div>`); histHtml += '</div>'; showDialog('History', histHtml, { type: 'alert' }).then(() => { const dl = document.querySelectorAll('[data-url]'); dl.forEach(el => el.onclick = () => navigate(el.dataset.url)); }); };
+        containerEl.querySelector('#darkmode-btn').onclick = () => { darkMode = !darkMode; containerEl.querySelector('#darkmode-btn').textContent = darkMode ? '☀️' : '🌙'; loadTab(activeTab); };
+        renderTabs(); loadTab(0);
+    }
+
+    async function askAPI(query) { const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`; const res = await fetch(url); if (!res.ok) throw new Error('HTTP '+res.status); const data = await res.json(); let results = ''; if (data.AbstractText) results += data.AbstractText + '\n'; if (data.RelatedTopics && data.RelatedTopics.length) data.RelatedTopics.slice(0,5).forEach((t,i) => { if(t.Text) results += `${i+1}. ${t.Text}\n`; }); return results || 'No results.'; }
+    async function browseAPI(query) { const reg = await fetchRegistry(); return reg.filter(s => (s.name||'').toLowerCase().includes(query.toLowerCase()) || (s.url||'').toLowerCase().includes(query.toLowerCase()) || (s.desc||'').toLowerCase().includes(query.toLowerCase())); }
+
+    // ==================== INPUT ====================
+    inputField.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); const cmd = inputField.value.trim(); inputField.value = ''; histIdx = history.length; handleCommand(cmd); } else if (e.key === 'ArrowUp') { e.preventDefault(); if (history.length && histIdx > 0) { histIdx--; inputField.value = history[histIdx]; } } else if (e.key === 'ArrowDown') { e.preventDefault(); if (histIdx < history.length - 1) { histIdx++; inputField.value = history[histIdx]; } else { histIdx = history.length; inputField.value = ''; } } });
+    outputArea.addEventListener('pointerdown', () => { if (!desktopActive) inputField.focus(); });
+    themeBtns.forEach(btn => btn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); setTheme(btn.dataset.theme); out(`Theme set to ${btn.dataset.theme}.`); if (desktopActive) showToast(`Theme set to ${btn.dataset.theme}`); }));
+
+    // ==================== BOOT ====================
+    function boot() {
+        out('Shrimp DOS v3.2 – Manual Pin & Compact Names', 'highlight');
+        out(`System: ${navigator.userAgent}`);
+        out('Type DESKTOP to launch the graphical OS.\n');
+    }
+    setTheme('green'); clearOut(); boot(); inputField.focus();
+})();
+</script>
+</body>
+</html>
