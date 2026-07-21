@@ -1,0 +1,44 @@
+{
+  "name":"Notepad",
+  "version":"1.0",
+  "icon":"📝",
+  "type":"app"
+}
+===
+let html = `
+  <div style="display:flex; flex-direction:column; height:100%;">
+    <textarea id="notepad-textarea" style="flex:1; background:#0a0a0a; color:#0f0; border:1px solid #444; padding:5px; font-family:monospace; font-size:12px; resize:none;"></textarea>
+    <div style="display:flex; gap:5px; margin-top:5px; justify-content:flex-end;">
+      <button id="notepad-open" class="taskbar-btn">📂 Open</button>
+      <button id="notepad-save" class="taskbar-btn">💾 Save</button>
+    </div>
+  </div>`;
+
+let win = shrimp.createWindow("Notepad", html, {width:380, height:300});
+let body = win.querySelector('.win-body');
+let textarea = body.querySelector('#notepad-textarea');
+let currentFile = '';
+
+body.querySelector('#notepad-open').onclick = async () => {
+  let name = await shrimp.prompt("Open File", "Enter filename to open:", currentFile || "untitled.txt");
+  if (name) {
+    currentFile = name;
+    let content = shrimp.readFile(name);
+    if (content !== undefined) {
+      textarea.value = content;
+      shrimp.notify("Loaded " + name, "info");
+    } else {
+      shrimp.notify("File not found. Starting new.", "error");
+      textarea.value = '';
+    }
+  }
+};
+
+body.querySelector('#notepad-save').onclick = async () => {
+  if (!currentFile) {
+    currentFile = await shrimp.prompt("Save As", "Enter filename:", "untitled.txt");
+    if (!currentFile) return;
+  }
+  shrimp.writeFile(currentFile, textarea.value);
+  shrimp.notify("Saved " + currentFile, "success");
+};
