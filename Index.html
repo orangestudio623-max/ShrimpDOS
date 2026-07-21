@@ -52,7 +52,7 @@
         }
         #terminal-input::selection { background:var(--text); color:var(--bg-term); }
 
-        /* Desktop */
+        
         #desktop-root {
             display:none; flex:1; position:relative; overflow:hidden; background:#1e1e2e;
         }
@@ -67,7 +67,7 @@
         .shortcut-icon { font-size:32px; display:block; margin-bottom:4px; }
         .shortcut-label { word-wrap:break-word; }
 
-        /* Right-click context menu */
+    
         .context-menu {
             position:absolute; background:#2a2a3e; border:1px solid #555; border-radius:6px;
             z-index:300; display:none; flex-direction:column; width:120px; padding:4px 0;
@@ -77,7 +77,7 @@
         }
         .context-menu-item:hover { background:#3a3a5e; }
 
-        /* Taskbar */
+        
         #taskbar {
             position:absolute; bottom:0; left:0; right:0; height:40px; background:#2a2a3e; display:flex;
             align-items:center; padding:0 5px; gap:5px; z-index:10;
@@ -103,7 +103,7 @@
         }
         .taskbar-btn.active { background:#555; }
 
-        /* Windows */
+        
         .shrimp-window {
             position:absolute; background:var(--gui-panel); border:2px solid #555; border-radius:8px;
             min-width:200px; min-height:100px; display:flex; flex-direction:column;
@@ -161,7 +161,7 @@
         .browser-tab .close-tab { margin-left:4px; cursor:pointer; font-weight:bold; color:#f88; font-size:14px; }
         .browser-tab .close-tab:hover { color:#f44; }
 
-        /* File manager items */
+        
         .fm-item {
             display:flex; flex-direction:column; align-items:center; justify-content:center;
             padding:4px; border-radius:6px; cursor:pointer; text-align:center; transition:background 0.1s;
@@ -225,7 +225,7 @@
 
 <script>
 (function() {
-    // ==================== FILE SYSTEM ====================
+        
     const STORAGE_KEY = 'shrimp-dos-v32';
     const VERSION_KEY = 'shrimp-dos-ver-v32';
     const FS_VERSION = 3;
@@ -306,7 +306,7 @@
         }
     }
 
-    // ==================== SOUND SYSTEM ====================
+       
     let audioCtx = null;
     function getAudioCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
     function playTone(freq, duration, type = 'square', volume = 0.08) {
@@ -323,7 +323,7 @@
         }
     }
 
-    // ==================== TERMINAL STATE ====================
+        
     let displayLines = [], animQueue = [], animTimer = null, animSpeed = 30, animEnabled = true;
     let history = [], histIdx = -1, theme = 'green';
     let editMode = false, editFile = '', editLines = [];
@@ -351,8 +351,7 @@
     const container = document.getElementById('container');
     const fileImport = document.getElementById('file-import');
 
-    // ==================== CONTEXT MENU ====================
-    let contextTarget = null;
+        let contextTarget = null;
     contextMenu.addEventListener('click', (e) => {
         const action = e.target.dataset.action;
         if (action === 'unpin' && contextTarget) {
@@ -369,8 +368,7 @@
         contextMenu.style.display = 'none';
         contextTarget = null;
     });
-
-    // ==================== LINE ANIMATION ====================
+  
     function stopAnimation() { if (animTimer) { clearTimeout(animTimer); animTimer = null; } }
     function processNextLine() { if (animQueue.length === 0) { animTimer = null; return; } const line = animQueue.shift(); displayLines.push(line); renderDisplay(); if (animQueue.length > 0) animTimer = setTimeout(processNextLine, animSpeed); }
     function queueLine(text, type = 'normal') { if (!animEnabled) { displayLines.push({text, type}); renderDisplay(); return; } animQueue.push({text, type}); if (!animTimer) animTimer = setTimeout(processNextLine, animSpeed); }
@@ -381,7 +379,6 @@
     function updatePrompt() { promptDisplay.textContent = editMode ? `(edit) ${editFile}>` : pathStr() + '>'; }
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-    // ==================== DESKTOP GRAPHICAL APIs ====================
     function showToast(message, type = 'info') { if (!desktopActive) return; const toast = document.createElement('div'); toast.className = 'toast ' + type; toast.textContent = message; desktopArea.appendChild(toast); setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500); }
     function showDialog(title, message, options = {}) {
         return new Promise((resolve) => {
@@ -409,8 +406,7 @@
         if (win) { const refreshConsole = () => { const outEl = win.querySelector('#console-output'); if (outEl) { outEl.innerHTML = consoleLines.map(l => { let color = '#0f0'; if (l.type === 'error') color = '#f44'; else if (l.type === 'highlight') color = '#ff0'; return `<span style="color:${color}">${esc(l.text)}</span>`; }).join('\n'); outEl.scrollTop = outEl.scrollHeight; } }; const interval = setInterval(refreshConsole, 500); win.querySelector('.close').addEventListener('click', ()=>{ clearInterval(interval); win.remove(); }); }
     }
 
-    // ==================== DESKTOP ====================
-    function createDesktop() {
+     function createDesktop() {
         if (desktopActive) return;
         desktopActive = true; consoleLines = [];
         outputArea.style.display = 'none'; inputLine.style.display = 'none'; desktopRoot.style.display = 'flex';
@@ -472,7 +468,7 @@
         if (idx !== -1) { shortcuts[idx].el.remove(); shortcuts.splice(idx, 1); shortcuts.forEach((s, i) => { s.el.style.left = (10 + (i % ICONS_PER_ROW) * ICON_WIDTH) + 'px'; s.el.style.top = (10 + Math.floor(i / ICONS_PER_ROW) * ICON_HEIGHT) + 'px'; }); }
     }
 
-    // ==================== WINDOW CREATION (with sound) ====================
+    
     function createWindowInDesktop(title, html, opts = {}) {
         if (!desktopActive) return null;
         const win = document.createElement('div'); win.className = 'shrimp-window';
@@ -507,8 +503,7 @@
         return win;
     }
 
-    // ==================== FILE MANAGER (compact names) ====================
-    function launchFileManager() {
+        function launchFileManager() {
         if (!desktopActive) return;
         const html = `<div style="display:flex; gap:5px; margin-bottom:5px; flex-wrap:wrap;"><button id="fm-up" class="taskbar-btn">⬆</button><button id="fm-home" class="taskbar-btn">🏠</button><span id="fm-path" style="flex:1; background:#0a0a0a; padding:5px; border-radius:4px; font-size:12px; color:#ccc;">C:\\</span><button id="fm-newdir" class="taskbar-btn">📁 New</button><button id="fm-newfile" class="taskbar-btn">📄 New</button><button id="fm-import" class="taskbar-btn">📥 Import</button><button id="fm-edit" class="taskbar-btn">📝 Edit</button><button id="fm-copy" class="taskbar-btn">📋 Copy</button><button id="fm-move" class="taskbar-btn">✂️ Move</button><button id="fm-del" class="taskbar-btn">🗑️</button><button id="fm-ren" class="taskbar-btn">✏️ Ren</button><button id="fm-pin" class="taskbar-btn">📌 Pin</button></div><div id="fm-files" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap:4px;"></div>`;
         const win = createWindowInDesktop('File Manager', html, { width: 430, height: 350 });
@@ -553,7 +548,7 @@
         executeScript(scriptName, sf.content).then(() => { window._shrimpOut = null; });
     }
 
-    // ==================== COMMAND HANDLER ====================
+ 
     async function handleCommand(cmdLine) {
         if (!cmdLine.trim()) return; const line = cmdLine.trim(); const promptStr = editMode ? `(edit) ${editFile}` : pathStr();
         flushAll(); displayLines.push({ text: `${promptStr}> ${line}`, type: 'command' }); renderDisplay();
@@ -606,7 +601,7 @@
         }
     }
 
-    // Basic commands (same as before)
+        
     function dir() { const d = getDir(); if (!d) return out('Invalid','error'); out(` Directory of ${pathStr()}`,'highlight'); let f=0,dir=0; const entries = Object.entries(d).sort((a,b)=>a[1].type!==b[1].type?(a[1].type==='dir'?-1:1):a[0].localeCompare(b[0])); if (cwd.length>1) { out('.            <DIR>'); out('..           <DIR>'); dir+=2; } for (const [n,i] of entries) { if (i.type==='dir'){out(`${pad(n,12)} <DIR>`,'highlight');dir++;} else {out(`${pad(n,12)} ${String(i.content?i.content.length:0).padStart(6)} bytes`);f++;} } out(`        ${f} file(s)  ${dir} dir(s)`); }
     function cd(args) { if(!args.length)return out(pathStr()); if(args[0]==='\\'){cwd=['C:'];return;} if(args[0]==='..'){if(cwd.length>1)cwd.pop();return;} const f=findInDir(args[0]); if(!f||f.type!=='dir'){out('Not found','error');return;} cwd.push(f.name); }
     function md(args) { if(!args.length){out('Syntax: MD <dir>','error');return;} const d=getDir(); if(findInDir(args[0])){out('Exists','error');return;} d[args[0]]={type:'dir',children:{}};saveFS();out('Created'); }
@@ -627,8 +622,7 @@
     function setTheme(t) { const valid=['green','amber','white','shrimp']; if(!valid.includes(t)){out('Usage: COLOR [green|amber|white|shrimp]','error');return;} theme=t; container.className=''; if(t!=='green')container.classList.add('theme-'+t); themeBtns.forEach(b=>b.classList.toggle('active',b.dataset.theme===t)); updatePrompt(); }
     function pad(s,l){return s+' '.repeat(Math.max(0,l-s.length));}
 
-    // Web commands
-    async function getCommand(args) { if(!args.length){out('Usage: GET <url>','error');return;} out(`Fetching ${args[0]}...`); const text=await robustFetch(args[0]); out(text.substring(0,2000)); flushAll(); }
+     async function getCommand(args) { if(!args.length){out('Usage: GET <url>','error');return;} out(`Fetching ${args[0]}...`); const text=await robustFetch(args[0]); out(text.substring(0,2000)); flushAll(); }
     async function askCommand(args) { if(!args.length){out('Usage: ASK <query>','error');return;} const q=args.join(' '); try{const url=`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1`; const res=await fetch(url); if(!res.ok)throw new Error('HTTP '+res.status); const d=await res.json(); if(d.AbstractText)out('Abstract: '+d.AbstractText); if(d.RelatedTopics&&d.RelatedTopics.length){out('\nRelated:'); d.RelatedTopics.slice(0,5).forEach((t,i)=>{if(t.Text)out(`${i+1}. ${t.Text}`);});}else out('No results');} catch(e){out('Search failed: '+e.message,'error');} flushAll(); }
     const REGISTRY_URL = 'https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/sitedata.json';
     async function fetchRegistry() { if(siteRegistryCache)return siteRegistryCache; const res=await fetch(REGISTRY_URL); if(!res.ok)throw new Error('Registry offline'); siteRegistryCache=await res.json(); return siteRegistryCache; }
@@ -639,8 +633,7 @@
 
     function scanPrograms() { const dir = fsRoot['C:'].children['PROGRAMS']; if (!dir || dir.type !== 'dir') return []; const result = []; for (const [name, info] of Object.entries(dir.children)) { if (info.type !== 'file') continue; const ext = name.split('.').pop().toLowerCase(); if (ext !== 'shr' && ext !== 'shgui') continue; const sep = '\n===\n'; const idx = info.content.indexOf(sep); let pname = name, icon = '⚡'; if (idx !== -1) { try { const h = JSON.parse(info.content.substring(0, idx)); pname = h.name || name; icon = h.icon || '⚡'; } catch(e) {} } result.push({ name: pname, icon, path: 'C:\\PROGRAMS\\' + name }); } return result; }
 
-    // ==================== PACKAGE MANAGER (no auto-shortcut) ====================
-    const PKG_INDEX_URL = 'https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/pkg_index.json';
+        const PKG_INDEX_URL = 'https://raw.githubusercontent.com/orangestudio623-max/ShrimpDOS/main/pkg_index.json';
 
     async function pkgCommand(args) {
         const sub = (args[0] || '').toUpperCase();
@@ -707,7 +700,7 @@
         renderList();
     }
 
-    // ==================== SCRIPT EXECUTION ====================
+ 
     async function executeScript(filename, content, args = []) {
         out(`Running ${filename}...`, 'highlight');
         const sep = '\n===\n'; let code = content; const idx = content.indexOf(sep);
@@ -741,7 +734,7 @@
 
     async function robustFetch(url) { try { const r=await fetch(url,{mode:'cors'}); if(r.ok)return await r.text(); } catch(e){} try { const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url)); if(r.ok)return await r.text(); } catch(e){} try { const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)); if(r.ok)return await r.text(); } catch(e){} throw new Error('Failed to fetch'); }
 
-    // ==================== BROWSER (unchanged) ====================
+     
     function launchBrowser() {
         if (!desktopActive) return;
         const bookmarksKey = 'shrimp-browser-bookmarks', historyKey = 'shrimp-browser-history';
@@ -773,12 +766,12 @@
     async function askAPI(query) { const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`; const res = await fetch(url); if (!res.ok) throw new Error('HTTP '+res.status); const data = await res.json(); let results = ''; if (data.AbstractText) results += data.AbstractText + '\n'; if (data.RelatedTopics && data.RelatedTopics.length) data.RelatedTopics.slice(0,5).forEach((t,i) => { if(t.Text) results += `${i+1}. ${t.Text}\n`; }); return results || 'No results.'; }
     async function browseAPI(query) { const reg = await fetchRegistry(); return reg.filter(s => (s.name||'').toLowerCase().includes(query.toLowerCase()) || (s.url||'').toLowerCase().includes(query.toLowerCase()) || (s.desc||'').toLowerCase().includes(query.toLowerCase())); }
 
-    // ==================== INPUT ====================
+ 
     inputField.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); const cmd = inputField.value.trim(); inputField.value = ''; histIdx = history.length; handleCommand(cmd); } else if (e.key === 'ArrowUp') { e.preventDefault(); if (history.length && histIdx > 0) { histIdx--; inputField.value = history[histIdx]; } } else if (e.key === 'ArrowDown') { e.preventDefault(); if (histIdx < history.length - 1) { histIdx++; inputField.value = history[histIdx]; } else { histIdx = history.length; inputField.value = ''; } } });
     outputArea.addEventListener('pointerdown', () => { if (!desktopActive) inputField.focus(); });
     themeBtns.forEach(btn => btn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); setTheme(btn.dataset.theme); out(`Theme set to ${btn.dataset.theme}.`); if (desktopActive) showToast(`Theme set to ${btn.dataset.theme}`); }));
 
-    // ==================== BOOT ====================
+       
     function boot() {
         out('Shrimp DOS v3.2 – Manual Pin & Compact Names', 'highlight');
         out(`System: ${navigator.userAgent}`);
