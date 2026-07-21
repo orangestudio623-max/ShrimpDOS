@@ -1,0 +1,75 @@
+{
+  "name":"Calculator",
+  "version":"1.0",
+  "icon":"🔢",
+  "type":"app"
+}
+===
+let html = `
+  <div style="display:flex; flex-direction:column; height:100%;">
+    <input id="calc-display" type="text" readonly style="width:100%; padding:8px; background:#111; color:#fff; border:1px solid #555; font-size:18px; text-align:right; margin-bottom:8px;">
+    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; flex:1;">
+      <button class="calc-btn">7</button><button class="calc-btn">8</button><button class="calc-btn">9</button><button class="calc-btn">/</button>
+      <button class="calc-btn">4</button><button class="calc-btn">5</button><button class="calc-btn">6</button><button class="calc-btn">*</button>
+      <button class="calc-btn">1</button><button class="calc-btn">2</button><button class="calc-btn">3</button><button class="calc-btn">-</button>
+      <button class="calc-btn">0</button><button class="calc-btn">.</button><button class="calc-btn">C</button><button class="calc-btn" style="background:#0a0;">+</button>
+      <button class="calc-btn" style="grid-column: span 4; background:#0a0;">=</button>
+    </div>
+  </div>`;
+
+let win = shrimp.createWindow("Calculator", html, {width:240, height:260});
+let body = win.querySelector('.win-body');
+let display = body.querySelector('#calc-display');
+let buttons = body.querySelectorAll('.calc-btn');
+
+let current = '', operator = '', previous = '';
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    let val = btn.textContent;
+    if (val === 'C') {
+      current = ''; operator = ''; previous = ''; display.value = '';
+    } else if (val === '=') {
+      if (previous && current) {
+        let result;
+        let p = parseFloat(previous), c = parseFloat(current);
+        switch(operator) {
+          case '+': result = p + c; break;
+          case '-': result = p - c; break;
+          case '*': result = p * c; break;
+          case '/': result = c !== 0 ? p / c : 'Error'; break;
+        }
+        display.value = result;
+        current = result.toString(); previous = ''; operator = '';
+      }
+    } else if (['+','-','*','/'].includes(val)) {
+      if (current) {
+        if (previous && operator) {
+          let p = parseFloat(previous), c = parseFloat(current);
+          switch(operator) {
+            case '+': previous = (p + c).toString(); break;
+            case '-': previous = (p - c).toString(); break;
+            case '*': previous = (p * c).toString(); break;
+            case '/': previous = c !== 0 ? (p / c).toString() : 'Error'; break;
+          }
+          display.value = previous;
+        } else {
+          previous = current;
+        }
+        operator = val;
+        current = '';
+      } else if (val === '-') {
+        current = '-';
+        display.value = current;
+      }
+    } else if (val === '.') {
+      if (!current.includes('.')) {
+        current += '.';
+        display.value = current;
+      }
+    } else {
+      current += val;
+      display.value = current;
+    }
+  });
+});
