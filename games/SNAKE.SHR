@@ -1,0 +1,101 @@
+{
+  "name":"Snake",
+  "version":"1.0",
+  "icon":"🐍",
+  "type":"game"
+}
+===
+let areaW = shrimp.desktopArea ? shrimp.desktopArea().w : 420;
+let areaH = shrimp.desktopArea ? shrimp.desktopArea().h : 600;
+let gridSize = 20;
+let cols = Math.floor(Math.min(380, areaW - 20) / gridSize);
+let rows = Math.floor(Math.min(250, areaH - 60) / gridSize);
+let canvasW = cols * gridSize;
+let canvasH = rows * gridSize;
+let winW = canvasW + 4;
+let winH = canvasH + 34;
+let win = shrimp.createWindow("Snake", "", {width: winW, height: winH});
+let body = win.querySelector(".win-body");
+body.style.padding = "0"; body.style.overflow = "hidden";
+let canvas = document.createElement("canvas");
+canvas.width = canvasW; canvas.height = canvasH;
+canvas.style.display = "block";
+body.appendChild(canvas);
+let ctx = canvas.getContext("2d");
+
+let snake = [{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
+let dir = {x:1, y:0};
+let food = randomFood();
+let score = 0;
+let gameOver = false;
+
+function randomFood() {
+  while(true) {
+    let fx = Math.floor(Math.random() * cols);
+    let fy = Math.floor(Math.random() * rows);
+    if (!snake.some(seg => seg.x===fx && seg.y===fy)) return {x:fx, y:fy};
+  }
+}
+
+function reset() {
+  snake = [{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
+  dir = {x:1, y:0};
+  food = randomFood();
+  score = 0;
+  gameOver = false;
+}
+
+let lastKey = null;
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowUp' && dir.y===0) { dir = {x:0, y:-1}; e.preventDefault(); }
+  else if (e.key === 'ArrowDown' && dir.y===0) { dir = {x:0, y:1}; e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' && dir.x===0) { dir = {x:-1, y:0}; e.preventDefault(); }
+  else if (e.key === 'ArrowRight' && dir.x===0) { dir = {x:1, y:0}; e.preventDefault(); }
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  let touch = e.touches[0];
+  let rect = canvas.getBoundingClientRect();
+  let tx = touch.clientX - rect.left;
+  let ty = touch.clientY - rect.top;
+  let head = snake[0];
+  let dx = tx - head.x * gridSize;
+  let dy = ty - head.y * gridSize;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 0 && dir.x===0) dir = {x:1, y:0};
+    else if (dx < 0 && dir.x===0) dir = {x:-1, y:0};
+  } else {
+    if (dy > 0 && dir.y===0) dir = {x:0, y:1};
+    else if (dy < 0 && dir.y===0) dir = {x:0, y:-1};
+  }
+});
+
+shrimp.gameLoop((dt) => {
+  if (gameOver) {
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0,0,canvasW,canvasH);
+    ctx.fillStyle = '#f44'; ctx.font = '20px monospace'; ctx.fillText('Game Over', canvasW/2-60, canvasH/2);
+    return;
+  }
+
+  let head = snake[0];
+  let newHead = {x: head.x + dir.x, y: head.y + dir.y};
+  if (newHead.x < 0 || newHead.x >= cols || newHead.y < 0 || newHead.y >= rows || snake.some(s => s.x===newHead.x && s.y===newHead.y)) {
+    gameOver = true;
+    return;
+  }
+  snake.unshift(newHead);
+  if (newHead.x === food.x && newHead.y === food.y) {
+    score++;
+    food = randomFood();
+  } else {
+    snake.pop();
+  }
+
+  ctx.fillStyle = '#1e1e2e'; ctx.fillRect(0,0,canvasW,canvasH);
+  ctx.fillStyle = '#0f0';
+  snake.forEach(seg => ctx.fillRect(seg.x*gridSize, seg.y*gridSize, gridSize-2, gridSize-2));
+  ctx.fillStyle = '#f44';
+  ctx.fillRect(food.x*gridSize, food.y*gridSize, gridSize-2, gridSize-2);
+  ctx.fillStyle = '#fff'; ctx.font = '12px monospace'; ctx.fillText('Score: '+score, 5, 15);
+});
